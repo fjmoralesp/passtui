@@ -1,0 +1,15 @@
+# General
+build/
+dist/
+wheels/
+*.egg-info/
+*.egg
+*.py[oc]
+__pycache__/
+*.so
+*~
+.cache
+
+# Virtual environment
+venv/
+.venv

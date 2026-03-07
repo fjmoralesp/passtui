@@ -1,0 +1,58 @@
+[project]
+name = "passtui"
+version = "0.0.1"
+description = "The TUI for pass"
+authors = [{ name = "Francisco Morales", email = "fjmoralesp@outlook.com" }]
+dependencies = ["click>=8.3.1,<9.0.0", "textual[syntax]==8.0.2"]
+readme = "README.md"
+requires-python = ">=3.14"
+classifiers = [
+  # Project status
+  "Development Status :: 2 - Pre-Alpha",
+
+  # User target
+  "Intended Audience :: Developers",
+
+  # Usage target
+  "Topic :: Software Development :: User Interfaces",
+  "Environment :: Console",
+  "Operating System :: OS Independent",
+
+  # License
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+
+  # Supported Python versions
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.14",
+]
+keywords = [
+  "tui",
+  "pass",
+  "security",
+  "terminal",
+  "gpg",
+  "password",
+  "textual",
+  "cli",
+  "passtui",
+  "developer-tool",
+]
+license = { file = "LICENSE" }
+
+[project.urls]
+Homepage = "https://github.com/fjmoralesp/passtui"
+Repository = "https://github.com/fjmoralesp/passtui"
+Issues = "https://github.com/fjmoralesp/passtui/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.envs.default]
+installer = "uv"
+
+[dependency-groups]
+dev = ["pytest==9.0.2", "textual-dev==1.8.0"]
+
+[project.scripts]
+passtui = "passtui.cli:cli"
