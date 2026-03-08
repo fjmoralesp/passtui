@@ -1,0 +1,9 @@
+AuthScreen {
+  layout: horizontal;
+  align: center middle;
+}
+
+ AuthScreen Label {
+  color: crimson;
+  text-style: bold;
+}
