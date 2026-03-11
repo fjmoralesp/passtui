@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.binding import Binding
-from textual.widgets import Label
+from textual.widgets import Label, Footer
 from passtui.security import passcli
 
 
@@ -14,6 +14,7 @@ class AuthScreen(Screen[bool]):
 
     def compose(self) -> ComposeResult:
         yield Label("Press Ctrl+U to unlock your GPG key. 🔐")
+        yield Footer()
 
     def action_unlock(self) -> None:
         is_unlocked = passcli.unlock()

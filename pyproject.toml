@@ -4,9 +4,9 @@ version = "0.0.1"
 description = "The TUI for pass"
 authors = [{ name = "Francisco Morales", email = "fjmoralesp@outlook.com" }]
 dependencies = [
-    "click>=8.3.1,<9.0.0",
-    "passpy>=1.0.2",
-    "textual[syntax]==8.0.2",
+  "click>=8.3.1,<9.0.0",
+  "passpy>=1.0.2",
+  "textual[syntax]==8.0.2",
 ]
 readme = "README.md"
 requires-python = ">=3.14"
@@ -59,4 +59,4 @@ installer = "uv"
 dev = ["pytest==9.0.2", "textual-dev==1.8.0"]
 
 [project.scripts]
-passtui = "passtui.cli:cli"
+passtui = "passtui.__main__:cli"
