@@ -1,0 +1,10 @@
+Screen {
+  layout: grid;
+  grid-size: 2;
+  grid-columns: 1fr 1fr;
+  grid-rows: 15% 85%;
+}
+
+Search {
+  column-span: 2;
+}
