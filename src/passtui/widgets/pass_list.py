@@ -2,12 +2,20 @@ from textual.binding import Binding
 from textual.reactive import reactive
 from textual.widgets import Tree
 from textual.widgets.tree import TreeNode
+from passtui.security import passcli
+from passtui.models.pass_store import PassModel
+from passtui.utils.clipboard import (
+    copy_password_to_clipboard,
+    copy_username_to_clipboard,
+)
 from typing import Any
 
 
 class PassList(Tree):
     items = reactive(list)
     is_filter = reactive(False)
+
+    _current_node: TreeNode
 
     BINDINGS = [
         Binding("j", "cursor_down", "Cursor Down"),
@@ -33,6 +41,40 @@ class PassList(Tree):
     def on_mount(self) -> None:
         self._build_tree()
         self.focus()
+
+    def on_tree_node_highlighted(self, event: Tree.NodeHighlighted) -> None:
+        self._current_node = event.node
+
+    def action_copy_password(self) -> None:
+        pass_model = self._get_highlighted_node_data()
+        if not pass_model:
+            return
+
+        sucess = copy_password_to_clipboard(pass_model)
+        if not sucess:
+            self.notify("Failed to copy Password", severity="error")
+            return
+
+        self.notify("Password copied to clipboard")
+
+    def action_copy_username(self) -> None:
+        pass_model = self._get_highlighted_node_data()
+        if not pass_model:
+            return
+
+        sucess = copy_username_to_clipboard(pass_model)
+        if not sucess:
+            self.notify("Failed to copy Username", severity="error")
+            return
+
+        self.notify("Username copied to clipboard")
+
+    def _get_highlighted_node_data(self) -> PassModel | None:
+        if not self._current_node.data:
+            self.notify("Can't get data, no node highlighted", severity="error")
+            return
+
+        return passcli.get_store_key(self._current_node.data)
 
     def _build_tree(self) -> None:
         self.root.remove_children()

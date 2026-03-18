@@ -6,6 +6,7 @@ authors = [{ name = "Francisco Morales", email = "fjmoralesp@outlook.com" }]
 dependencies = [
   "click>=8.3.1,<9.0.0",
   "passpy>=1.0.2",
+  "pyperclip>=1.11.0",
   "textual[syntax]==8.0.2",
 ]
 readme = "README.md"
@@ -54,6 +55,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.envs.default]
 installer = "uv"
+
+[tool.pyright]
+extraPaths = ["stubs"]
 
 [dependency-groups]
 dev = ["pytest==9.0.2", "textual-dev==1.8.0"]

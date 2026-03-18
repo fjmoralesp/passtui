@@ -1,21 +1,25 @@
+from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.widgets import TextArea, Static
+from passtui.models.pass_store import PassModel
+from passtui.security import passcli
+from passtui.screens.input_modal import InputModalScreen
+from passtui.utils.clipboard import (
+    copy_password_to_clipboard,
+    copy_username_to_clipboard,
+    copy_line_to_clipboard,
+)
 
 DEFAULT_MESSAGE = "GPG locked. 🔐"
-NEW_PASSWORD_TEMPLATE = """(add your password here)
-
-Username:
-URL:
-Notes:
-"""
 
 
 class PassData(Static):
     text_area: TextArea
 
     _is_dirty = False
-    _showing_welcome = True
+    _pass_model: PassModel | None = None
+    _pass_path: str | None = None
 
     DEFAULT_CSS = """
     PassData {
@@ -32,19 +36,10 @@ class PassData(Static):
         Binding("y", "copy_current_line", "Copy current line"),
         Binding("j", "cursor_down", "Cursor Down"),
         Binding("k", "cursor_up", "Cursor Up"),
+        Binding("h", "cursor_left", "Cursor left"),
+        Binding("l", "cursor_right", "Cursor right"),
         Binding("ctrl+s", "save", "Save"),
     ]
-
-    """
-    NOTES:
-    - copy_password (c): copy password to clipboard - uses pass's built-in clipboard (auto-clears after timeout)
-    - copy_username (b): copy username to clipboard - parses pass text to get value after "Username:" label using pyperclip
-    - copy_current_line (y): this should not be reusable, since its only meant to be user in this widget
-      this should get the full text of the current TextArea line, then try to get the value by detecting the labels Username: URL: or Notes: and if not detected, just copy the whole line
-    - j/k: cursor movement actions
-    - ctrl+s behaves differently, depending whether it is editing an existing pass or adding a new one, if editing, it should save the changes, if adding, it should request the user in a modal, whether
-      to add it in the selected pass in the PassList so the user should only provide the name of the new pass, or create a new entry in the store in which case the user should provide the full path of the pass
-    """
 
     def compose(self) -> ComposeResult:
         self.text_area = TextArea.code_editor(
@@ -57,27 +52,42 @@ class PassData(Static):
         yield self.text_area
 
     def add_new_password(self) -> None:
-        self._set_text(NEW_PASSWORD_TEMPLATE)
+        pass_model, template = PassModel.get_new_entry_template()
+        success = self._set_text(template)
+        if not success:
+            return
+
+        self._pass_model = pass_model
+        self._pass_path = None
         self.action_insert()
 
-    def set_password(self, pass_data: str) -> None:
-        self._set_text(pass_data)
+    def set_password(self, pass_model: PassModel, pass_path: str) -> None:
+        success = self._set_text(str(pass_model))
+        if not success:
+            return
+
+        self._pass_model = pass_model
+        self._pass_path = pass_path
         self._set_read_only_mode()
 
     def action_cancel(self) -> None:
         self._set_read_only_mode()
 
     def action_insert(self) -> None:
-        if self._showing_welcome:
+        if not self._pass_model:
+            self.notify("Emptiness is read-only. 😄", severity="error")
             return
 
         self._is_dirty = True
         self._set_edit_mode()
 
-    def _set_text(self, text: str) -> None:
-        if not self._is_dirty:
-            self.text_area.text = text
-        self._showing_welcome = False
+    def _set_text(self, text: str) -> bool:
+        if self._is_dirty:
+            self.notify("You have pending changes to save", severity="warning")
+            return False
+
+        self.text_area.text = text
+        return True
 
     def _set_edit_mode(self) -> None:
         self.text_area.read_only = False
@@ -93,3 +103,69 @@ class PassData(Static):
         # Textual shows Bindings only when parent widget is focused first
         self.focus()
         self.text_area.focus()
+
+    def action_copy_password(self) -> None:
+        sucess = copy_password_to_clipboard(self._pass_model)
+        if not sucess:
+            self.notify("Failed to copy password", severity="error")
+            return
+
+        self.notify("Password copied to clipboard")
+
+    def action_copy_username(self) -> None:
+        sucess = copy_username_to_clipboard(self._pass_model)
+        if not sucess:
+            self.notify("Failed to copy Username", severity="error")
+            return
+
+        self.notify("Username copied to clipboard")
+
+    def action_copy_current_line(self) -> None:
+        cursor_location = self.text_area.cursor_location
+        line_number = cursor_location[0]
+        line = self.text_area.get_line(line_number)
+        success = copy_line_to_clipboard(line)
+
+        if not success:
+            self.notify("Failed to copy line", severity="error")
+            return
+
+        self.notify("Line copied to clipboard")
+
+    def action_cursor_down(self) -> None:
+        self.text_area.action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        self.text_area.action_cursor_up()
+
+    def action_cursor_left(self) -> None:
+        self.text_area.action_cursor_left()
+
+    def action_cursor_right(self) -> None:
+        self.text_area.action_cursor_right()
+
+    def action_save(self) -> None:
+        self._save()
+
+    @work
+    async def _save(self) -> None:
+        if not self._pass_model or not self._is_dirty:
+            self.notify("Nothing to save", severity="warning")
+            return
+
+        if not self._pass_path:
+            self._pass_path = await self.app.push_screen_wait(
+                InputModalScreen("Enter the password path")
+            )
+            if not self._pass_path:
+                self.notify("No valid path provided", severity="error")
+                return
+
+        try:
+            pass_data = self.text_area.text
+            self._pass_model = PassModel(pass_data)
+            passcli.save_store_key(self._pass_path, self._pass_model)
+            self.notify("Saved!")
+            self._is_dirty = False
+        except Exception as e:
+            self.notify(f"Failed to save: {e}", severity="error")

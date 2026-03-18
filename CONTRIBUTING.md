@@ -32,6 +32,12 @@ Then in another terminal, run:
 TEXTUAL=devtools,debug passtui
 ```
 
+To use a custom store path—mainly for testing—run:
+
+```bash
+PASSWORD_STORE_DIR="~/.testing-password-store" TEXTUAL=devtools,debug passtui
+```
+
 ### Running the tests
 
 Be sure to use the `Makefile` commands.

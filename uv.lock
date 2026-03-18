@@ -394,6 +394,7 @@ source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "passpy" },
+    { name = "pyperclip" },
     { name = "textual", extra = ["syntax"] },
 ]
 
@@ -407,6 +408,7 @@ dev = [
 requires-dist = [
     { name = "click", specifier = ">=8.3.1,<9.0.0" },
     { name = "passpy", specifier = ">=1.0.2" },
+    { name = "pyperclip", specifier = ">=1.11.0" },
     { name = "textual", extras = ["syntax"], specifier = "==8.0.2" },
 ]
 

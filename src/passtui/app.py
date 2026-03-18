@@ -8,6 +8,9 @@ from passtui.security import passcli
 from passtui.widgets.search import Search
 from passtui.widgets.pass_list import PassList
 from passtui.widgets.pass_data import PassData
+from passtui.screens.input_modal import InputModalScreen
+from passtui.screens.gpg_keygen_modal import GpgKeygenModalScreen
+from passtui.screens.gpg_export_modal import GpgExportModalScreen
 
 
 class PassTUI(App):
@@ -20,20 +23,10 @@ class PassTUI(App):
         Binding("e", "focus_editor", "Focus editor"),
         Binding("t", "focus_explorer", "Focus explorer"),
         Binding("s", "sync", "Sync"),
-        Binding("g", "create_gpg", "Create new GPG key"),
+        Binding("g", "create_gpg_store", "Create new GPG Store"),
         Binding("x", "export_gpg", "Export GPG key"),
         Binding("z", "import_gpg", "Import GPG key"),
     ]
-
-    """
-    NOTES:
-    - sync: should show a modal where the user adds a git repo url, and then we should sync the pass data to the repo
-      if the pass store already has a repo we should sync with the repo every time the user adds a new pass or edits an existing one
-      passpy should already do that, since pass itself does it.
-    - create_gpg: should create a new gpg key and then add it to the store, the needed data should be request to the user in a modal
-    - export_gpg: the implementation for this "gpg --export-secret-keys -a your_email@example.com > private.key" the needed data should be request to the user in a modal
-    - import_gpg: the implementation for this "gpg --import private.key" the needed data should be request to the user in a modal
-    """
 
     def compose(self) -> ComposeResult:
         yield Search(data=self.keys, id="search")
@@ -61,10 +54,84 @@ class PassTUI(App):
     async def handle_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         self.update_selected(event.node)
 
-    @work(exclusive=True)
+    @work
     async def update_selected(self, node: TreeNode) -> None:
         if node.data:
-            self.query_one(PassData).set_password(passcli.get_store_key(node.data))
+            pass_model = passcli.get_store_key(node.data)
+            if not pass_model:
+                return
+            self.query_one(PassData).set_password(
+                pass_model=pass_model, pass_path=node.data
+            )
 
     def action_add_new_password(self) -> None:
         self.query_one(PassData).add_new_password()
+
+    @work
+    async def action_sync(self) -> None:
+        if passcli.is_git_initialized():
+            passcli.sync_git()
+            self.notify("Git sync completed")
+        else:
+            repo_url = await self.push_screen_wait(
+                InputModalScreen(
+                    "Enter git repository URL (e.g., git@github.com:user/repo.git)"
+                )
+            )
+            if repo_url:
+                try:
+                    passcli.init_git(repo_url)
+                    self.notify("Git initialized and pushed")
+                except Exception as e:
+                    self.notify(f"Failed to init git: {e}", severity="error")
+
+    @work
+    async def action_create_gpg_store(self) -> None:
+        key_data = await self.push_screen_wait(GpgKeygenModalScreen())
+        if key_data:
+            try:
+                fingerprint = passcli.create_gpg_store(
+                    key_data.name, key_data.email, key_data.path
+                )
+                if not fingerprint:
+                    self.notify("Failed to create GPG Store", severity="error")
+                    return
+
+                self.notify(f"GPG Store created: {fingerprint}")
+            except Exception as e:
+                self.notify(f"Error: {e}", severity="error")
+
+    @work
+    async def action_export_gpg(self) -> None:
+        export_data = await self.push_screen_wait(GpgExportModalScreen())
+        if export_data:
+            try:
+                output_path = passcli.export_gpg_key(
+                    passphrase=export_data.passphrase,
+                    output_path=export_data.output_path,
+                )
+                if not output_path:
+                    self.notify("Failed to export GPG key", severity="error")
+                    return
+
+                self.notify(f"GPG key exported to {output_path}")
+            except Exception as e:
+                self.notify(f"Error: {e}", severity="error")
+
+    @work
+    async def action_import_gpg(self) -> None:
+        filepath = await self.push_screen_wait(
+            InputModalScreen(
+                "Enter path to GPG key file (e.g., ~/passtui/gpg-export.asc)"
+            )
+        )
+        if filepath:
+            try:
+                success = passcli.import_gpg_key(filepath)
+                if not success:
+                    self.notify("Failed to import GPG key", severity="error")
+                    return
+
+                self.notify("GPG key imported successfully")
+            except Exception as e:
+                self.notify(f"Error: {e}", severity="error")
