@@ -43,3 +43,22 @@ sudo pacman -Syu gnupg
 ```bash
 brew install gnupg
 ```
+
+## Roadmap
+
+- [ ] Config file
+- [ ] Vi motions for password editor
+- [ ] Custom Keybindings
+- [ ] Imports
+  - [ ] 1Password txt or 1pif data
+  - [ ] keepass KeepassX XML data, CSV data
+  - [ ] Figaro's Password Manager XML data
+  - [ ] Lastpass CSV data
+  - [ ] Ked Password Manager data
+  - [ ] Revelation Password Manager data
+  - [ ] Password Gorilla data
+  - [ ] PWSafe data
+  - [ ] KWallet data
+  - [ ] Roboform data
+  - [ ]  password-exporter data
+  - [ ] pwsafe data
