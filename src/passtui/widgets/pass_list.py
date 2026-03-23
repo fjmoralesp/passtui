@@ -1,13 +1,15 @@
-from textual.binding import Binding
-from textual.reactive import reactive
-from textual.widgets import Tree
-from textual.widgets.tree import TreeNode
 from passtui.security import passcli
 from passtui.models.pass_store import PassModel
 from passtui.utils.clipboard import (
     copy_password_to_clipboard,
     copy_username_to_clipboard,
 )
+from rich.style import Style
+from rich.text import Text
+from textual.binding import Binding
+from textual.reactive import reactive
+from textual.widgets import Tree, _tree
+from textual.widgets.tree import TreeNode, TreeDataType
 from typing import Any
 
 
@@ -17,13 +19,34 @@ class PassList(Tree):
 
     _current_node: TreeNode
 
+    ICON_NODE = "🔐 "
+    ICON_NODE_EXPANDED = "🔓 "
+    ICON_GPG_NODE = "📝 "
+    """Unicode 'icon' to use for an expanded node."""
+
+    BORDER_TITLE = "T"
+
     BINDINGS = [
         Binding("j", "cursor_down", "Cursor Down"),
         Binding("k", "cursor_up", "Cursor Up"),
+        Binding("h", "scroll_left", "Scroll left"),
+        Binding("l", "scroll_right", "Scroll right"),
         Binding("enter", "select_cursor", "Select"),
         Binding("c", "copy_password", "Copy password"),
         Binding("b", "copy_username", "Copy username"),
     ]
+
+    DEFAULT_CSS = """
+    PassList {
+        border: solid $primary-muted;
+        background: $background;
+        padding: 0 0 0 1;
+
+        &:focus {
+            background-tint: $background;
+        }
+    }
+    """
 
     def __init__(self, items: list[str], *args: Any, **kwargs: Any) -> None:
         super().__init__("List", *args, **kwargs)
@@ -113,3 +136,31 @@ class PassList(Tree):
             )
             node_map[path] = node
             parent = node
+
+    def render_label(
+        self, node: TreeNode[TreeDataType], base_style: Style, style: Style
+    ) -> Text:
+        """
+        Custom label rendering for the Tree
+
+        Args:
+            node: A tree node.
+            base_style: The base style of the widget.
+            style: The additional style for the label.
+
+        Returns:
+            A Rich Text object containing the label.
+        """
+        node_label = node._label.copy()
+        node_label.stylize(style)
+
+        if node._allow_expand:
+            prefix = (
+                self.ICON_NODE_EXPANDED if node.is_expanded else self.ICON_NODE,
+                base_style + _tree.TOGGLE_STYLE,  # Not the cleanest way to do this
+            )
+        else:
+            prefix = (self.ICON_GPG_NODE, base_style)
+
+        text = Text.assemble(prefix, node_label)
+        return text

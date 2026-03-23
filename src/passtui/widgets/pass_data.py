@@ -21,11 +21,7 @@ class PassData(Static):
     _pass_model: PassModel | None = None
     _pass_path: str | None = None
 
-    DEFAULT_CSS = """
-    PassData {
-        height: auto;
-    }
-    """
+    BORDER_TITLE = "E"
 
     # priority=True to override TextArea Bindings
     BINDINGS = [
@@ -41,12 +37,25 @@ class PassData(Static):
         Binding("ctrl+s", "save", "Save"),
     ]
 
+    DEFAULT_CSS = """
+    PassData {
+        border: solid $primary-muted;
+    }
+    PassData TextArea {
+        width: 1fr;
+        height: 1fr;
+        background: $background;
+    }
+    """
+
     def compose(self) -> ComposeResult:
         self.text_area = TextArea.code_editor(
             DEFAULT_MESSAGE,
             language="markdown",
             read_only=True,
             show_line_numbers=False,
+            theme="css",
+            compact=True,
         )
 
         yield self.text_area
@@ -69,6 +78,9 @@ class PassData(Static):
         self._pass_model = pass_model
         self._pass_path = pass_path
         self._set_read_only_mode()
+
+    def set_focus(self) -> None:
+        self.text_area.focus()
 
     def action_cancel(self) -> None:
         self._set_read_only_mode()
@@ -155,7 +167,10 @@ class PassData(Static):
 
         if not self._pass_path:
             self._pass_path = await self.app.push_screen_wait(
-                InputModalScreen("Enter the password path")
+                InputModalScreen(
+                    label="Enter the password path",
+                    placeholder="(e.g., my-passwords/emails/gmail)",
+                )
             )
             if not self._pass_path:
                 self.notify("No valid path provided", severity="error")

@@ -1,3 +1,4 @@
+from functools import Placeholder
 from textual.app import App
 from textual import on, work
 from textual.app import ComposeResult
@@ -14,8 +15,9 @@ from passtui.screens.gpg_export_modal import GpgExportModalScreen
 
 
 class PassTUI(App):
-    CSS_PATH = "app.tcss"
     keys = passcli.list_keys()
+
+    CSS_PATH = "app.tcss"
 
     BINDINGS = [
         Binding("/", "search_password", "Search password"),
@@ -34,11 +36,14 @@ class PassTUI(App):
         yield PassData()
         yield Footer()
 
+    def on_mount(self) -> None:
+        self.theme = "rose-pine-moon"
+
     def action_search_password(self) -> None:
-        self.screen.focus_next(Search)
+        self.query_one(Search).set_focus()
 
     def action_focus_editor(self) -> None:
-        self.query_one(PassData).text_area.focus()
+        self.query_one(PassData).set_focus()
 
     def action_focus_explorer(self) -> None:
         self.screen.focus_next(PassList)
@@ -70,12 +75,16 @@ class PassTUI(App):
     @work
     async def action_sync(self) -> None:
         if passcli.is_git_initialized():
-            passcli.sync_git()
-            self.notify("Git sync completed")
+            try:
+                passcli.sync_git()
+                self.notify("Git sync completed")
+            except Exception as e:
+                self.notify(f"Failed to sync git: {e}", severity="error")
         else:
             repo_url = await self.push_screen_wait(
                 InputModalScreen(
-                    "Enter git repository URL (e.g., git@github.com:user/repo.git)"
+                    label="Enter git repository URL",
+                    placeholder="(e.g., git@github.com:user/repo.git)",
                 )
             )
             if repo_url:
@@ -122,7 +131,8 @@ class PassTUI(App):
     async def action_import_gpg(self) -> None:
         filepath = await self.push_screen_wait(
             InputModalScreen(
-                "Enter path to GPG key file (e.g., ~/passtui/gpg-export.asc)"
+                label="Enter path to GPG key file",
+                placeholder="(e.g., ~/passtui/gpg-export.asc)",
             )
         )
         if filepath:
