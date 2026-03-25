@@ -60,7 +60,11 @@ installer = "uv"
 extraPaths = ["stubs"]
 
 [dependency-groups]
-dev = ["pytest==9.0.2", "textual-dev==1.8.0"]
+dev = [
+    "pytest==9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "textual-dev==1.8.0",
+]
 
 [project.scripts]
 passtui = "passtui.__main__:cli"

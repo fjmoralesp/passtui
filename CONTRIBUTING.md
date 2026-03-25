@@ -1,6 +1,6 @@
 # Contributing to PassTUI
 
-PassTUI is open to contributions!
+`PassTUI` is open to contributions!
 
 ## Development
 
@@ -40,8 +40,8 @@ PASSWORD_STORE_DIR="~/.testing-password-store" TEXTUAL=devtools,debug passtui
 
 ### Running the tests
 
-Be sure to use the `Makefile` commands.
+Run the tests with:
 
 ```bash
-make test
+pytest
 ```
