@@ -11,6 +11,7 @@
   <p align="center">
     The TUI for <strong>pass</strong> — the standard Unix password manager.
   </p>
+  <img width="3440" height="1381" alt="passtui" src="https://github.com/user-attachments/assets/33da7043-206e-4849-9c5b-951d8ec432ca" />
 </div>
 
 ---
