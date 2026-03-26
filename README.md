@@ -11,7 +11,7 @@
   <p align="center">
     The TUI for <strong>pass</strong> — the standard Unix password manager.
   </p>
-  <img width="3440" height="1381" alt="passtui" src="https://github.com/user-attachments/assets/33da7043-206e-4849-9c5b-951d8ec432ca" />
+  <img width="800" alt="passtui" src="https://github.com/user-attachments/assets/33da7043-206e-4849-9c5b-951d8ec432ca" />
 </div>
 
 ---
@@ -94,16 +94,18 @@ brew install gnupg
 
 ### Installation
 
-Install PassTUI with [pip](https://pip.pypa.io/) or [pipx](https://pipx.pypa.io/):
+Install PassTUI with [uv](https://docs.astral.sh/uv/)
+
+Install uv:
 
 ```bash
-pipx install passtui
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Or with pip:
+Install passtui:
 
 ```bash
-pip install passtui
+uv tool install --python 3.14 passtui
 ```
 
 Then launch it:

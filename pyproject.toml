@@ -1,6 +1,6 @@
 [project]
 name = "passtui"
-version = "0.0.1"
+version = "0.0.2b1"
 description = "The TUI for pass"
 authors = [{ name = "Francisco Morales", email = "fjmoralesp@outlook.com" }]
 dependencies = [
@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 classifiers = [
   # Project status
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
 
   # User target
   "Intended Audience :: Developers",
@@ -48,10 +48,14 @@ license = { file = "LICENSE" }
 Homepage = "https://github.com/fjmoralesp/passtui"
 Repository = "https://github.com/fjmoralesp/passtui"
 Issues = "https://github.com/fjmoralesp/passtui/issues"
+Documentation = "https://github.com/fjmoralesp/passtui/blob/main/README.md"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/passtui"]
 
 [tool.hatch.envs.default]
 installer = "uv"
@@ -60,11 +64,7 @@ installer = "uv"
 extraPaths = ["stubs"]
 
 [dependency-groups]
-dev = [
-    "pytest==9.0.2",
-    "pytest-asyncio>=1.3.0",
-    "textual-dev==1.8.0",
-]
+dev = ["pytest==9.0.2", "pytest-asyncio>=1.3.0", "textual-dev==1.8.0"]
 
 [project.scripts]
 passtui = "passtui.__main__:cli"
