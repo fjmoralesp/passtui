@@ -46,8 +46,8 @@ class PassCLI:
         if not self.is_git_initialized():
             return
 
-        self._store.git("pull", "--rebase")
-        self._store.git("push")
+        self._store.git("pull", "--rebase", "origin", "HEAD")
+        self._store.git("push", "origin", "HEAD")
 
     def create_gpg_store(self, name: str, email: str, path=None) -> str | None:
         """
