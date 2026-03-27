@@ -40,7 +40,7 @@ class PassCLI:
 
         self._store.init_git()
         self._store.git("remote", "add", "origin", repo_url)
-        self._store.git("push", "origin", "master")
+        self._store.git("push", "origin", "HEAD")
 
     def sync_git(self) -> None:
         if not self.is_git_initialized():
