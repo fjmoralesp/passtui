@@ -92,29 +92,31 @@ sudo pacman -Syu gnupg
 brew install gnupg
 ```
 
-gpg2 is not always available after brew install, so you might need to create a symlink:
-
-```bash
-ln -s $(which gpg) /opt/homebrew/bin/gpg2
-```
-
-macOS also requires pinentry-mac to be installed:
-
-```bash
-brew install pinentry-mac
-```
-
-Then, add pinentry to `gpg-agent.conf` (make sure `~/.gnupg` already exists, if not you can run `gpg -k`):
-
-```bash
-echo "pinentry-program /opt/homebrew/bin/pinentry-mac" >> ~/.gnupg/gpg-agent.conf
-```
-
-finally, restart gpg-agent:
-
-```bash
-gpgconf --kill gpg-agent
-```
+> **macOS additional setup:**
+>
+> `gpg2` is not always available after `brew install`, so you might need to create a symlink:
+>
+> ```bash
+> ln -s $(which gpg) /opt/homebrew/bin/gpg2
+> ```
+>
+> macOS also requires `pinentry-mac` to be installed:
+>
+> ```bash
+> brew install pinentry-mac
+> ```
+>
+> Then, add pinentry to `gpg-agent.conf` (make sure `~/.gnupg` already exists — if not, run `gpg -k` first):
+>
+> ```bash
+> echo "pinentry-program /opt/homebrew/bin/pinentry-mac" >> ~/.gnupg/gpg-agent.conf
+> ```
+>
+> Finally, restart gpg-agent:
+>
+> ```bash
+> gpgconf --kill gpg-agent
+> ```
 
 ### Installation
 
