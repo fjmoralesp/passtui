@@ -1,6 +1,6 @@
 [project]
 name = "passtui"
-version = "0.0.2b1"
+version = "0.0.3b1"
 description = "The TUI for pass"
 authors = [{ name = "Francisco Morales", email = "fjmoralesp@outlook.com" }]
 dependencies = [
@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 classifiers = [
   # Project status
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
 
   # User target
   "Intended Audience :: Developers",

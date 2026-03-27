@@ -72,7 +72,7 @@ def test_init_git_not_initialized():
                 passcli.init_git("test/repo")
                 mock_init_git.assert_called_once()
                 mock_git.assert_any_call("remote", "add", "origin", "test/repo")
-                mock_git.assert_any_call("push", "origin", "master")
+                mock_git.assert_any_call("push", "origin", "HEAD")
 
 
 def test_sync_git_not_initialized():
@@ -86,8 +86,8 @@ def test_sync_git_initialized():
     with patch.object(cli, "is_git_initialized", return_value=True):
         with patch.object(cli._store, "git") as mock_git:
             cli.sync_git()
-            mock_git.assert_any_call("pull", "--rebase")
-            mock_git.assert_any_call("push")
+            mock_git.assert_any_call("pull", "--rebase", "origin", "HEAD")
+            mock_git.assert_any_call("push", "origin", "HEAD")
 
 
 def test_create_gpg_store_already_initialized():
