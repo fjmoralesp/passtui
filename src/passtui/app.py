@@ -1,4 +1,3 @@
-from functools import Placeholder
 from textual.app import App
 from textual import on, work
 from textual.app import ComposeResult
@@ -50,10 +49,20 @@ class PassTUI(App):
 
     @on(Input.Changed, "#search")
     async def on_search_changed(self, event: Input.Changed) -> None:
-        pass_list = self.query_one(Search).results
-        widget: PassList = self.query_one(PassList)
-        widget.is_filter = True if event.value else False
-        widget.items = pass_list
+        self.set_pass_list_items(event.value)
+
+    def set_pass_list_items(self, value: str) -> None:
+        pass_list = self.query_one(PassList)
+        pass_list.is_filter = True if value else False
+        pass_list.items = self.query_one(Search).results
+
+    @on(PassData.Saved)
+    async def on_pass_data_saved(self) -> None:
+        self.keys = passcli.list_keys()
+        search = self.query_one(Search)
+        search.data = self.keys
+        search.refresh_filter()
+        self.set_pass_list_items(search.get_value())
 
     @on(Tree.NodeSelected)
     async def handle_tree_node_selected(self, event: Tree.NodeSelected) -> None:

@@ -51,11 +51,20 @@ class Search(Static):
     def set_focus(self) -> None:
         self._input.focus()
 
-    @on(Input.Changed)
-    async def on_changed(self, event: Input.Changed) -> None:
-        if event.value:
+    def apply_filter(self, value: str) -> None:
+        if value:
             self.results = [
-                entry for entry in self.data if event.value.lower() in entry.lower()
+                entry for entry in self.data if value.lower() in entry.lower()
             ]
         else:
             self.results = self.data
+
+    def get_value(self) -> str:
+        return self._input.value
+
+    def refresh_filter(self) -> None:
+        self.apply_filter(self.get_value())
+
+    @on(Input.Changed)
+    async def on_changed(self, event: Input.Changed) -> None:
+        self.apply_filter(event.value)

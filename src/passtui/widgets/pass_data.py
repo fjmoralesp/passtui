@@ -1,6 +1,7 @@
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.message import Message
 from textual.widgets import TextArea, Static
 from passtui.models.pass_store import PassModel
 from passtui.security import passcli
@@ -15,6 +16,9 @@ DEFAULT_MESSAGE = "GPG locked. 🔐"
 
 
 class PassData(Static):
+    class Saved(Message):
+        pass
+
     text_area: TextArea
 
     _is_dirty = False
@@ -182,5 +186,7 @@ class PassData(Static):
             passcli.save_store_key(self._pass_path, self._pass_model)
             self.notify("Saved!")
             self._is_dirty = False
+            self._set_read_only_mode()
+            self.post_message(PassData.Saved())
         except Exception as e:
             self.notify(f"Failed to save: {e}", severity="error")
