@@ -13,6 +13,7 @@ from passtui.utils.clipboard import (
 )
 
 DEFAULT_MESSAGE = "GPG locked. 🔐"
+TITLE = " (E) Editor "
 
 
 class PassData(Static):
@@ -25,7 +26,7 @@ class PassData(Static):
     _pass_model: PassModel | None = None
     _pass_path: str | None = None
 
-    BORDER_TITLE = "E"
+    BORDER_TITLE = TITLE
 
     # priority=True to override TextArea Bindings
     BINDINGS = [
@@ -43,7 +44,11 @@ class PassData(Static):
 
     DEFAULT_CSS = """
     PassData {
-        border: solid $primary-muted;
+        border: tall $primary-muted;
+    }
+    PassData:focus-within {
+        border: tall $primary;
+        border-title-color: $primary;
     }
     PassData TextArea {
         width: 1fr;
@@ -95,6 +100,7 @@ class PassData(Static):
             return
 
         self._is_dirty = True
+        self.border_title = TITLE + "- unsaved... "
         self._set_edit_mode()
 
     def _set_text(self, text: str) -> bool:
@@ -184,9 +190,13 @@ class PassData(Static):
             pass_data = self.text_area.text
             self._pass_model = PassModel(pass_data)
             passcli.save_store_key(self._pass_path, self._pass_model)
+
             self.notify("Saved!")
+
             self._is_dirty = False
+            self.border_title = TITLE
             self._set_read_only_mode()
+
             self.post_message(PassData.Saved())
         except Exception as e:
             self.notify(f"Failed to save: {e}", severity="error")

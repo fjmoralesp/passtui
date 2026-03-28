@@ -25,21 +25,24 @@ class GpgKeygenModalScreen(ModalScreen[GpgKeyData | None]):
         align: center middle;
     }
     GpgKeygenModalScreen Grid {
-        column-span: 2;
         grid-size: 2;
-        grid-gutter: 0 2;
-        padding: 0 2;
-        width: 80;
-        height: 14;
-        border: thick $background 80%;
+        grid-gutter: 1 2;
+        padding: 1 2;
+        width: 84;
+        height: 19;
+        border: tall $primary;
+        border-title-color: $primary;
+        border-title-align: center;
         background: $surface;
     }
     GpgKeygenModalScreen Horizontal {
         column-span: 2;
-        border: solid $primary-muted;
+        border: tall $surface-lighten-2;
+        padding: 0 1;
     }
     GpgKeygenModalScreen Horizontal Label {
         margin: 0 1 0 0;
+        color: $text-muted;
     }
     GpgKeygenModalScreen Button {
         width: 1fr;
@@ -48,7 +51,7 @@ class GpgKeygenModalScreen(ModalScreen[GpgKeyData | None]):
     """
 
     def compose(self) -> ComposeResult:
-        with Grid():
+        with Grid(id="modal-grid"):
             with Horizontal():
                 yield Label("Enter your name:")
                 yield Input(
@@ -72,6 +75,9 @@ class GpgKeygenModalScreen(ModalScreen[GpgKeyData | None]):
                 )
             yield Button("(Enter) Submit", variant="primary", id="submit")
             yield Button("(Esc) Cancel", variant="error", id="cancel")
+
+    def on_mount(self) -> None:
+        self.query_one("#modal-grid").border_title = " Generate GPG Key "
 
     @on(Button.Pressed, "#submit")
     async def handle_button_submit(self) -> None:

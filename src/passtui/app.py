@@ -2,6 +2,7 @@ from textual.app import App
 from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.containers import Container
 from textual.widgets import Footer, Input, Tree
 from textual.widgets.tree import TreeNode
 from passtui.security import passcli
@@ -19,21 +20,22 @@ class PassTUI(App):
     CSS_PATH = "app.tcss"
 
     BINDINGS = [
-        Binding("/", "search_password", "Search password"),
+        Binding("/", "search_password", "Search password", show=False),
         Binding("n", "add_new_password", "Add new password"),
-        Binding("e", "focus_editor", "Focus editor"),
-        Binding("t", "focus_explorer", "Focus explorer"),
+        Binding("e", "focus_editor", "Focus editor", show=False),
+        Binding("t", "focus_explorer", "Focus explorer", show=False),
         Binding("s", "sync", "Sync"),
-        Binding("g", "create_gpg_store", "Create new GPG Store"),
-        Binding("x", "export_gpg", "Export GPG key"),
-        Binding("z", "import_gpg", "Import GPG key"),
+        Binding("g", "create_gpg_store", "Create new GPG Store", show=False),
+        Binding("x", "export_gpg", "Export GPG key", show=False),
+        Binding("z", "import_gpg", "Import GPG key", show=False),
     ]
 
     def compose(self) -> ComposeResult:
-        yield Search(data=self.keys, id="search")
-        yield PassList(items=self.keys)
-        yield PassData()
-        yield Footer()
+        with Container(id="app-container"):
+            yield Search(data=self.keys, id="search")
+            yield PassList(items=self.keys)
+            yield PassData()
+            yield Footer()
 
     def on_mount(self) -> None:
         self.theme = "rose-pine-moon"

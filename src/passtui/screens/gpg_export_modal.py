@@ -29,21 +29,24 @@ class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
         align: center middle;
     }
     GpgExportModalScreen Grid {
-        column-span: 2;
         grid-size: 2;
-        grid-gutter: 0 2;
-        padding: 0 2;
-        width: 80;
-        height: 11;
-        border: thick $background 80%;
+        grid-gutter: 1 2;
+        padding: 1 2;
+        width: 84;
+        height: 15;
+        border: tall $primary;
+        border-title-color: $primary;
+        border-title-align: center;
         background: $surface;
     }
     GpgExportModalScreen Horizontal {
         column-span: 2;
-        border: solid $primary-muted;
+        border: tall $surface-lighten-2;
+        padding: 0 1;
     }
     GpgExportModalScreen Horizontal Label {
         margin: 0 1 0 0;
+        color: $text-muted;
     }
     GpgExportModalScreen Button {
         width: 1fr;
@@ -52,7 +55,7 @@ class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
     """
 
     def compose(self) -> ComposeResult:
-        with Grid():
+        with Grid(id="modal-grid"):
             with Horizontal():
                 yield Label("Enter GPG key passphrase:")
                 yield Input(
@@ -70,6 +73,9 @@ class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
                 )
             yield Button("(Enter) Submit", variant="primary", id="submit")
             yield Button("(Esc) Cancel", variant="error", id="cancel")
+
+    def on_mount(self) -> None:
+        self.query_one("#modal-grid").border_title = " Export GPG Key "
 
     @on(Button.Pressed, "#submit")
     async def handle_button_submit(self) -> None:

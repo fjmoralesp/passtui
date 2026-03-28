@@ -24,7 +24,7 @@ class PassList(Tree):
     ICON_GPG_NODE = "📝 "
     """Unicode 'icon' to use for an expanded node."""
 
-    BORDER_TITLE = "T"
+    BORDER_TITLE = " (T) Passwords "
 
     BINDINGS = [
         Binding("j", "cursor_down", "Cursor Down"),
@@ -38,12 +38,14 @@ class PassList(Tree):
 
     DEFAULT_CSS = """
     PassList {
-        border: solid $primary-muted;
+        border: tall $primary-muted;
         background: $background;
         padding: 0 0 0 1;
 
         &:focus {
             background-tint: $background;
+            border: tall $primary;
+            border-title-color: $primary;
         }
     }
     """

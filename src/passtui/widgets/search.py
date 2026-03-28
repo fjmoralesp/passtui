@@ -10,7 +10,7 @@ class Search(Static):
     _id: str
     _input: Input
 
-    BORDER_TITLE = "/"
+    BORDER_TITLE = " (/) Search "
 
     BINDINGS = [
         Binding("enter", "search", "Search", priority=True),
@@ -21,12 +21,17 @@ class Search(Static):
         Search {
             column-span: 2;
             layout: horizontal;
-            border: solid $primary-muted;
+            border: tall $primary-muted;
             height: 100%;
             padding: 0 2;
         }
+        Search:focus-within {
+            border: tall $primary;
+            border-title-color: $primary;
+        }
         Search Label {
             margin: 0 1 0 0;
+            color: $text-muted;
         }
     """
 

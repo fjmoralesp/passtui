@@ -17,22 +17,25 @@ class InputModalScreen(ModalScreen[str | None]):
         align: center middle;
     }
     InputModalScreen Grid {
-        column-span: 2;
         grid-size: 2;
         grid-gutter: 1 2;
         grid-rows: 1fr 3;
-        padding: 0 2;
-        width: 80;
-        height: 9;
-        border: thick $background 80%;
+        padding: 1 2;
+        width: 84;
+        height: 11;
+        border: tall $primary;
+        border-title-color: $primary;
+        border-title-align: center;
         background: $surface;
     }
     InputModalScreen Horizontal {
         column-span: 2;
-        border: solid $primary-muted;
+        border: tall $surface-lighten-2;
+        padding: 0 1;
     }
     InputModalScreen Horizontal Label {
         margin: 0 1 0 0;
+        color: $text-muted;
     }
     InputModalScreen Button {
         width: 1fr;
@@ -52,12 +55,15 @@ class InputModalScreen(ModalScreen[str | None]):
         self._placeholder = placeholder
 
     def compose(self) -> ComposeResult:
-        with Grid():
+        with Grid(id="modal-grid"):
             with Horizontal():
                 yield Label(self._label + ":")
                 yield Input(placeholder=self._placeholder, compact=True)
             yield Button("(Enter) Submit", variant="primary", id="submit")
             yield Button("(Esc) Cancel", variant="error", id="cancel")
+
+    def on_mount(self) -> None:
+        self.query_one("#modal-grid").border_title = " Input "
 
     @on(Button.Pressed, "#submit")
     async def handle_button_submit(self) -> None:
