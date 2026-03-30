@@ -88,35 +88,23 @@ sudo pacman -Syu gnupg
 
 **macOS**
 
+> macOS doesn’t include a default GPG configuration. I’ve provided a script that handles the most common setup steps, but if it doesn’t work in your case, you’ll need to install the prerequisites manually.
+
 ```bash
-brew install gnupg
+curl -LsSf https://raw.githubusercontent.com/fjmoralesp/passtui/main/scripts/install.sh | sh
 ```
 
-> **macOS additional setup:**
->
-> `gpg2` is not always available after `brew install`, so you might need to create a symlink:
->
-> ```bash
-> ln -s $(which gpg) /opt/homebrew/bin/gpg2
-> ```
->
-> macOS also requires `pinentry-mac` to be installed:
->
-> ```bash
-> brew install pinentry-mac
-> ```
->
-> Then, add pinentry to `gpg-agent.conf` (make sure `~/.gnupg` already exists — if not, run `gpg -k` first):
->
-> ```bash
-> echo "pinentry-program /opt/homebrew/bin/pinentry-mac" >> ~/.gnupg/gpg-agent.conf
-> ```
->
-> Finally, restart gpg-agent:
->
-> ```bash
-> gpgconf --kill gpg-agent
-> ```
+<details>
+  <summary>Click to see manual installation instructions</summary>
+
+1. Install gnupg and pinentry-mac: `brew install gnupg pinentry-mac`
+2. Create the keyring folder: `gpg -k`
+3. Configure pinentry: `echo "pinentry-program $(brew --prefix)/bin/pinentry-mac" > "$HOME/.gnupg/gpg-agent.conf"`
+4. Add GPG terminal detection to your shell config (~/.zshrc or ~/.bashrc): `export GPG_TTY=$(tty)`
+5. Create a gpg2 binary symlink: `ln -s "$(which gpg)" "$(brew --prefix)/bin/gpg2"`
+6. Restart the GPG agent: `gpgconf --kill gpg-agent`
+
+</details>
 
 ### Installation
 
