@@ -1,5 +1,4 @@
 import os
-import subprocess
 import secrets
 
 import passpy
@@ -74,40 +73,49 @@ class PassCLI:
         return key.fingerprint if key else None
 
     def export_gpg_key(
-        self, passphrase: str, output_path: str | None = None
+        self, passphrase: bytearray, output_path: str | None = None
     ) -> str | None:
-        """
-        This method exports the GPG key associated with the store. The store must be initialised and
-        it should have only one GPG key.
-        """
         if not self._store.is_init():
             return
 
         if output_path is None:
             export_dir = Path.home() / "passtui"
             export_dir.mkdir(exist_ok=True)
-            output_path = str(export_dir / "gpg-export.asc")
+            resolved_path = export_dir / "gpg-export.asc"
         else:
-            output_path = str(Path(output_path).expanduser())
-            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            resolved_path = Path(output_path).expanduser().resolve()
+            if not str(resolved_path).startswith(str(Path.home())):
+                raise ValueError(
+                    f"Output path must be inside the home directory: {resolved_path}"
+                )
+            resolved_path.parent.mkdir(parents=True, exist_ok=True)
 
         keys = _get_gpg_recipients(self._store.store_dir)
-        keys_data = self._gpg.export_keys(keys, passphrase=passphrase, secret=True)
+        try:
+            passphrase_str = passphrase.decode("utf-8")
+            keys_data = self._gpg.export_keys(
+                keys, passphrase=passphrase_str, secret=True
+            )
+        finally:
+            for i in range(len(passphrase)):
+                passphrase[i] = 0
         if not keys_data:
             return
-        with open(output_path, "w") as f:
+        with open(resolved_path, "w") as f:
             f.write(keys_data)
-        return output_path
+        return str(resolved_path)
 
     def import_gpg_key(self, file_path: str) -> bool:
-        """
-        Import a GPG key and use it to re-encrypt the password store.
-        """
         if not self._store.is_init():
             return False
 
-        input_path = str(Path(file_path).expanduser())
-        results = self._gpg.import_keys_file(input_path)
+        resolved_path = Path(file_path).expanduser().resolve()
+        if not str(resolved_path).startswith(str(Path.home())):
+            raise ValueError(
+                f"Import path must be inside the home directory: {resolved_path}"
+            )
+
+        results = self._gpg.import_keys_file(str(resolved_path))
 
         gpg_ids = results.fingerprints
         if gpg_ids is None:
@@ -121,7 +129,6 @@ class PassCLI:
         if not key_names:
             return False
 
-        # Unlock the password store
         try:
             key = self.get_store_key(key_names[0])
             if not key:
@@ -129,15 +136,14 @@ class PassCLI:
         except Exception:
             return False
 
-        # Make the new key trusted
         try:
             self._gpg.trust_keys(gpg_ids, "TRUST_ULTIMATE")
         except Exception:
             return False
 
-        # Update .gpg-id
         all_keys = list(dict.fromkeys(current_ids + gpg_ids))
         gpg_id_path = os.path.join(self._store.store_dir, ".gpg-id")
+
         with open(gpg_id_path, "w") as gpg_id_file:
             gpg_id_file.write("\n".join(all_keys))
             gpg_id_file.write("\n")
@@ -149,8 +155,6 @@ class PassCLI:
             verbose=False,
         )
 
-        # once the newly imported key is trusted, we need to reencrypt the store.
-        # All the fingerprints listed in the in .gpg-id file need to be signed
         reencrypt_path(
             self._store.store_dir,
             gpg_bin=self._store.gpg_bin,

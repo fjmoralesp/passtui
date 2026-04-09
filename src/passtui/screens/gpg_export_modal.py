@@ -1,5 +1,3 @@
-from typing import NamedTuple
-
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -8,17 +6,19 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, Label, Button
 
 
-class GpgExportData(NamedTuple):
-    passphrase: str
-    output_path: str | None
+class GpgExportData:
+    __slots__ = ("passphrase", "output_path")
+
+    def __init__(self, passphrase: bytearray, output_path: str | None) -> None:
+        self.passphrase = passphrase
+        self.output_path = output_path
+
+    def zero(self) -> None:
+        for i in range(len(self.passphrase)):
+            self.passphrase[i] = 0
 
 
 class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
-    """
-    This only works for GPG keys that were created with passtui,
-    where we use only one GPG key per store.
-    """
-
     BINDINGS = [
         Binding("enter", "submit", "Submit", priority=True),
         Binding("escape", "cancel", "Cancel"),
@@ -86,12 +86,13 @@ class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
         self.action_cancel()
 
     def action_submit(self) -> None:
-        passphrase = self.query_one("#passphrase", Input).value
+        passphrase_str = self.query_one("#passphrase", Input).value
         output = self.query_one("#output", Input).value
-        if passphrase:
+        if passphrase_str:
             self.dismiss(
                 GpgExportData(
-                    passphrase=passphrase, output_path=output if output else None
+                    passphrase=bytearray(passphrase_str.encode("utf-8")),
+                    output_path=output if output else None,
                 )
             )
         else:

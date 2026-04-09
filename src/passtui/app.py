@@ -12,6 +12,7 @@ from passtui.widgets.pass_data import PassData
 from passtui.screens.input_modal import InputModalScreen
 from passtui.screens.gpg_keygen_modal import GpgKeygenModalScreen
 from passtui.screens.gpg_export_modal import GpgExportModalScreen
+from passtui.screens.confirm_modal import ConfirmModalScreen
 
 
 class PassTUI(App):
@@ -137,6 +138,8 @@ class PassTUI(App):
                 self.notify(f"GPG key exported to {output_path}")
             except Exception as e:
                 self.notify(f"Error: {e}", severity="error")
+            finally:
+                export_data.zero()
 
     @work
     async def action_import_gpg(self) -> None:
@@ -146,13 +149,24 @@ class PassTUI(App):
                 placeholder="(e.g., ~/passtui/gpg-export.asc)",
             )
         )
-        if filepath:
-            try:
-                success = passcli.import_gpg_key(filepath)
-                if not success:
-                    self.notify("Failed to import GPG key", severity="error")
-                    return
+        if not filepath:
+            return
 
-                self.notify("GPG key imported successfully")
-            except Exception as e:
-                self.notify(f"Error: {e}", severity="error")
+        confirmed = await self.push_screen_wait(
+            ConfirmModalScreen(
+                message="This will grant FULL trust to the imported key and re-encrypt the store. Continue?",
+                title="Confirm Key Import",
+            )
+        )
+        if not confirmed:
+            return
+
+        try:
+            success = passcli.import_gpg_key(filepath)
+            if not success:
+                self.notify("Failed to import GPG key", severity="error")
+                return
+
+            self.notify("GPG key imported successfully")
+        except Exception as e:
+            self.notify(f"Error: {e}", severity="error")
