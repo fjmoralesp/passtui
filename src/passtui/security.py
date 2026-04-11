@@ -1,5 +1,6 @@
 import os
 import secrets
+import subprocess
 
 import passpy
 
@@ -131,7 +132,14 @@ class PassCLI:
             return False
 
         try:
-            self._gpg.trust_keys(gpg_ids, "TRUST_ULTIMATE")
+            self._gpg.trust_keys(gpg_ids, "TRUST_FULLY")
+            for gpg_id in gpg_ids:
+                subprocess.run(
+                    [self._store.gpg_bin, "--batch", "--yes", "--lsign-key", gpg_id],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
         except Exception:
             return False
 
