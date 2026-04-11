@@ -1,5 +1,3 @@
-<a name="readme-top"></a>
-
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -16,11 +14,11 @@
 
 ---
 
-## About The Project
+## About
 
-`PassTUI` is a terminal user interface for [pass](https://www.passwordstore.org/) — the standard Unix password manager. It brings a keyboard-driven, visual experience to your encrypted password store without ever leaving the terminal.
+`PassTUI` is a terminal UI for [pass](https://www.passwordstore.org/), the standard Unix password manager. It gives you a keyboard-driven, visual way to browse and manage your GPG-encrypted password store without ever leaving the terminal.
 
-If you live in the terminal and want a fast, intuitive way to manage your GPG-encrypted passwords, PassTUI is for you.
+If you live in the terminal and want a faster, more intuitive way to work with your passwords, this is for you.
 
 ### Built With
 
@@ -28,25 +26,21 @@ If you live in the terminal and want a fast, intuitive way to manage your GPG-en
 ![Textual][textual-shield]
 ![passpy][passpy-shield]
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
 ## Features
 
 - Browse your password store in a tree view
-- Search / filter passwords in real time
+- Search and filter passwords in real time
 - View and edit password entries in a built-in editor
-- Copy password to clipboard with a single keystroke
-- Copy username to clipboard with a single keystroke
+- Copy the password to clipboard with a single keystroke
+- Copy the username to clipboard with a single keystroke
 - Copy any line to clipboard
-- Create a new GPG key and password store
+- Create a new GPG key and password store from scratch
 - Add new password entries
 - Sync the password store with a remote Git repository
 - Export your GPG key to a file
 - Import a GPG key and re-encrypt the store
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -54,7 +48,7 @@ If you live in the terminal and want a fast, intuitive way to manage your GPG-en
 
 ### Prerequisites
 
-`pass` relies on GPG to encrypt and decrypt passwords, so `gpg` must be installed on your system.
+`pass` relies on GPG for encryption, so `gpg` needs to be installed on your system.
 
 **Ubuntu / Debian**
 
@@ -88,7 +82,7 @@ sudo pacman -Syu gnupg
 
 **macOS**
 
-> macOS doesn’t include a default GPG configuration. I’ve provided a script that handles the most common setup steps, but if it doesn’t work in your case, you’ll need to install the prerequisites manually.
+> macOS doesn't ship with a default GPG setup. There's a script that handles the most common configuration, but if it doesn't work for your setup you'll need to install the prerequisites manually.
 
 ```bash
 curl -LsSf https://raw.githubusercontent.com/fjmoralesp/passtui/main/scripts/install.sh | sh
@@ -108,7 +102,7 @@ curl -LsSf https://raw.githubusercontent.com/fjmoralesp/passtui/main/scripts/ins
 
 ### Installation
 
-Install PassTUI with [uv](https://docs.astral.sh/uv/)
+PassTUI is installed via [uv](https://docs.astral.sh/uv/).
 
 Install uv:
 
@@ -128,26 +122,22 @@ Then launch it:
 passtui
 ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
 ## Usage
 
 ### Create a GPG Store
 
-If you don't have a password store yet, PassTUI can create a GPG key and initialise the store for you in one step.
+If you don't have a password store yet, PassTUI can create the GPG key and initialise everything for you in one step.
 
 1. Launch PassTUI: `passtui`
 2. Press `g` to open the **Create GPG Store** dialog
-3. Fill in your **name**, **email**
+3. Fill in your **name** and **email**
 4. Press `Enter` to confirm
 
-PassTUI will generate a 4096-bit RSA GPG key and initialise the store at `~/.password-store` (or the path you provided).
+PassTUI will generate a 4096-bit RSA key and initialise the store at `~/.password-store` (or wherever `PASSWORD_STORE_DIR` points).
 
-> **Tip:** The store path defaults to `~/.password-store`. You can also set the `PASSWORD_STORE_DIR` environment variable to point to a different location before launching PassTUI.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+> **Tip:** You can set the `PASSWORD_STORE_DIR` environment variable before launching PassTUI to use a different store location.
 
 ### Add a New Password
 
@@ -163,9 +153,7 @@ PassTUI will generate a 4096-bit RSA GPG key and initialise the store at `~/.pas
 3. Press `Ctrl+S` to save
 4. When prompted, enter the path for the new entry (e.g., `email/gmail`)
 
-> **Tip:** The first line is always the password. PassTUI (and `pass`) will copy only the first line when you use the copy-password shortcut.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+> **Tip:** The first line is always the password. PassTUI (and `pass`) will only copy the first line when you use the copy-password shortcut.
 
 ### View an Existing Password
 
@@ -179,8 +167,6 @@ PassTUI will generate a 4096-bit RSA GPG key and initialise the store at `~/.pas
    - Press `y` to copy the **current line** to the clipboard
    - Press `i` to enter edit mode and make changes
    - Press `Ctrl+S` to save any edits
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Sync with a Git Repository
 
@@ -197,13 +183,11 @@ PassTUI can push and pull your password store to/from a remote Git repository.
 1. Press `s`
 2. PassTUI will pull with rebase and then push automatically
 
-> **Note:** This workflow is designed for stores that were created fresh. If your store was cloned from an existing remote, manage Git operations outside of PassTUI for the initial setup.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+> **Note:** This workflow is designed for stores created fresh. If your store was cloned from an existing remote, handle the initial Git setup outside of PassTUI.
 
 ### Export a GPG Key
 
-Exporting your GPG key lets you back it up or transfer it to another machine.
+Exporting your GPG key lets you back it up or move it to another machine.
 
 1. Press `x` to open the **Export GPG Key** dialog
 2. Enter your GPG key **passphrase**
@@ -212,21 +196,17 @@ Exporting your GPG key lets you back it up or transfer it to another machine.
 
 The key will be saved as an ASCII-armored `.asc` file.
 
-> **Warning:** Keep this file in a safe place. Anyone who has it and knows your passphrase can decrypt your passwords.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+> **Warning:** Keep this file somewhere safe. Anyone with access to it and your passphrase can decrypt your passwords.
 
 ### Import a GPG Key
 
-Importing a GPG key allows you to move your password store to a new machine or add a new trusted key.
+Importing a GPG key lets you move your password store to a new machine or add a new trusted key.
 
 1. Press `z` to open the **Import GPG Key** dialog
 2. Enter the **path** to the `.asc` key file (e.g., `~/passtui/gpg-export.asc`)
 3. Press `Enter` to import
 
-PassTUI will import the key, mark it as ultimately trusted, update the store's `.gpg-id`, and re-encrypt all entries with the new key.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+PassTUI will import the key, mark it as ultimately trusted, update the store's `.gpg-id`, and re-encrypt all entries.
 
 ---
 
@@ -272,12 +252,11 @@ PassTUI will import the key, mark it as ultimately trusted, update the store's `
 | `y`      | Copy current line to clipboard |
 | `Ctrl+S` | Save changes                   |
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
 ## Roadmap
 
+- [x] Route all passphrase prompts through `pinentry` for better security
 - [ ] Config file
 - [ ] Vi motions for password editor
 - [ ] Custom keybindings
@@ -295,25 +274,19 @@ PassTUI will import the key, mark it as ultimately trusted, update the store's `
   - [ ] password-exporter data
   - [ ] pwsafe data
 
-See the [open issues](https://github.com/fjmoralesp/passtui/issues) for a full list of proposed features and known issues.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+See the [open issues](https://github.com/fjmoralesp/passtui/issues) for a full list of proposed features and known bugs.
 
 ---
 
 ## Contributing
 
-Contributions, issues, and pull requests are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup instructions.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+Contributions, issues, and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup instructions.
 
 ---
 
 ## License
 
 Distributed under the GNU General Public License v3. See `LICENSE` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -322,8 +295,6 @@ Distributed under the GNU General Public License v3. See `LICENSE` for more info
 Francisco Morales — <fjmoralesp@outlook.com>
 
 Project Link: [https://github.com/fjmoralesp/passtui](https://github.com/fjmoralesp/passtui)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
