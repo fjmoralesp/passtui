@@ -119,7 +119,7 @@ def test_create_gpg_store_not_initialized():
 def test_export_gpg_key_not_initialized():
     cli = PassCLI()
     with patch.object(cli._store, "is_init", return_value=False):
-        result = cli.export_gpg_key("testpass")
+        result = cli.export_gpg_key()
         assert result is None
 
 
@@ -127,18 +127,57 @@ def test_export_gpg_key_no_output_path():
     cli = PassCLI()
     with patch.object(cli._store, "is_init", return_value=True):
         with patch("passtui.security._get_gpg_recipients", return_value=["key1"]):
-            with patch.object(cli._gpg, "export_keys", return_value="keydata"):
+            with patch.object(cli._gpg, "export_keys") as mock_export:
                 with patch("pathlib.Path.home") as mock_home:
                     mock_home.return_value = Path("/home/test")
                     with patch("pathlib.Path.mkdir"):
-                        with patch("builtins.open", mock_open()) as mock_file:
-                            with patch(
-                                "pathlib.Path.expanduser",
-                                return_value=Path("/home/test/passtui/gpg-export.asc"),
-                            ):
-                                result = cli.export_gpg_key("testpass")
+                        result = cli.export_gpg_key()
+                        assert result is not None
+                        assert "gpg-export.asc" in result
+                        mock_export.assert_called_once()
+                        _, kwargs = mock_export.call_args
+                        assert kwargs.get("secret") is True
+                        assert kwargs.get("expect_passphrase") is False
+
+
+def test_export_gpg_key_invalid_extension():
+    cli = PassCLI()
+    with patch.object(cli._store, "is_init", return_value=True):
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = Path("/home/test")
+            with patch(
+                "pathlib.Path.expanduser", return_value=Path("/home/test/key.txt")
+            ):
+                with patch(
+                    "pathlib.Path.resolve", return_value=Path("/home/test/key.txt")
+                ):
+                    try:
+                        cli.export_gpg_key("/home/test/key.txt")
+                        assert False, "Expected ValueError"
+                    except ValueError as e:
+                        assert ".asc" in str(e)
+
+
+def test_export_gpg_key_valid_custom_path():
+    cli = PassCLI()
+    with patch.object(cli._store, "is_init", return_value=True):
+        with patch("passtui.security._get_gpg_recipients", return_value=["key1"]):
+            with patch.object(cli._gpg, "export_keys") as mock_export:
+                with patch("pathlib.Path.home") as mock_home:
+                    mock_home.return_value = Path("/home/test")
+                    with patch(
+                        "pathlib.Path.expanduser",
+                        return_value=Path("/home/test/my-key.asc"),
+                    ):
+                        with patch(
+                            "pathlib.Path.resolve",
+                            return_value=Path("/home/test/my-key.asc"),
+                        ):
+                            with patch("pathlib.Path.mkdir"):
+                                result = cli.export_gpg_key("/home/test/my-key.asc")
                                 assert result is not None
-                                assert "gpg-export.asc" in result
+                                assert "my-key.asc" in result
+                                mock_export.assert_called_once()
 
 
 def test_import_gpg_key_not_initialized():
@@ -148,14 +187,154 @@ def test_import_gpg_key_not_initialized():
         assert result is False
 
 
-def test_import_gpg_key_no_keys():
+def test_import_gpg_key_fingerprints_none():
     cli = PassCLI()
     with patch.object(cli._store, "is_init", return_value=True):
-        with patch.object(cli, "list_keys", return_value=[]):
-            with patch("pathlib.Path.exists", return_value=True):
-                with patch.object(cli._gpg, "import_keys_file") as mock_import:
-                    mock_result = Mock()
-                    mock_result.fingerprints = None
-                    mock_import.return_value = mock_result
-                    result = cli.import_gpg_key("/test/key.asc")
-                    assert result is False
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = Path("/home/test")
+            with patch(
+                "pathlib.Path.expanduser", return_value=Path("/home/test/key.asc")
+            ):
+                with patch(
+                    "pathlib.Path.resolve", return_value=Path("/home/test/key.asc")
+                ):
+                    with patch.object(cli._gpg, "import_keys_file") as mock_import:
+                        mock_result = Mock()
+                        mock_result.fingerprints = None
+                        mock_import.return_value = mock_result
+                        result = cli.import_gpg_key("/home/test/key.asc")
+                        assert result is False
+
+
+def test_import_gpg_key_no_signer():
+    cli = PassCLI()
+    with patch.object(cli._store, "is_init", return_value=True):
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = Path("/home/test")
+            with patch(
+                "pathlib.Path.expanduser", return_value=Path("/home/test/key.asc")
+            ):
+                with patch(
+                    "pathlib.Path.resolve", return_value=Path("/home/test/key.asc")
+                ):
+                    with patch.object(cli._gpg, "import_keys_file") as mock_import:
+                        mock_result = Mock()
+                        mock_result.fingerprints = ["AAAA1111"]
+                        mock_import.return_value = mock_result
+                        with patch(
+                            "passtui.security._get_gpg_recipients", return_value=[]
+                        ):
+                            with patch.object(
+                                cli, "_ensure_signing_key", return_value=None
+                            ):
+                                result = cli.import_gpg_key("/home/test/key.asc")
+                                assert result is False
+
+
+def test_import_gpg_key_success():
+    cli = PassCLI()
+    with patch.object(cli._store, "is_init", return_value=True):
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = Path("/home/test")
+            with patch(
+                "pathlib.Path.expanduser", return_value=Path("/home/test/key.asc")
+            ):
+                with patch(
+                    "pathlib.Path.resolve", return_value=Path("/home/test/key.asc")
+                ):
+                    with patch.object(cli._gpg, "import_keys_file") as mock_import:
+                        mock_result = Mock()
+                        mock_result.fingerprints = ["AAAA1111"]
+                        mock_result.count = 1
+                        mock_import.return_value = mock_result
+                        with patch(
+                            "passtui.security._get_gpg_recipients",
+                            return_value=["BBBB2222"],
+                        ):
+                            with patch.object(
+                                cli, "_ensure_signing_key", return_value="BBBB2222"
+                            ):
+                                with patch.object(cli._gpg, "trust_keys"):
+                                    with patch("passtui.security.subprocess.run"):
+                                        with patch("builtins.open", mock_open()):
+                                            with patch("passtui.security.git_add_path"):
+                                                with patch(
+                                                    "passtui.security.reencrypt_path"
+                                                ):
+                                                    with patch.object(
+                                                        cli._store,
+                                                        "store_dir",
+                                                        "/home/test/.password-store",
+                                                    ):
+                                                        with patch.object(
+                                                            cli._store, "repo", Mock()
+                                                        ):
+                                                            result = cli.import_gpg_key(
+                                                                "/home/test/key.asc"
+                                                            )
+                                                            assert result is True
+
+
+def test_generate_gpg_key():
+    cli = PassCLI()
+    mock_input_data = Mock()
+    mock_key = Mock()
+    mock_key.fingerprint = "DEADBEEF"
+    with patch.object(
+        cli._gpg, "gen_key_input", return_value=mock_input_data
+    ) as mock_input:
+        with patch.object(cli._gpg, "gen_key", return_value=mock_key):
+            result = cli._generate_gpg_key("Test User", "test@example.com")
+            assert result == "DEADBEEF"
+            mock_input.assert_called_once_with(
+                name_real="Test User",
+                name_email="test@example.com",
+                key_type="RSA",
+                key_length=4096,
+                expire_date="0",
+            )
+
+
+def test_generate_gpg_key_failure():
+    cli = PassCLI()
+    mock_input_data = Mock()
+    with patch.object(cli._gpg, "gen_key_input", return_value=mock_input_data):
+        with patch.object(cli._gpg, "gen_key", return_value=None):
+            result = cli._generate_gpg_key("Test User", "test@example.com")
+            assert result is None
+
+
+def test_get_ultimate_signing_key_found():
+    cli = PassCLI()
+    gpg_output = "sec:u:4096:1:AABBCCDD1234::\nfpr:::::::::AABBCCDD1234FINGERPRINT:\n"
+    mock_result = Mock()
+    mock_result.stdout = gpg_output
+    with patch("passtui.security.subprocess.run", return_value=mock_result):
+        result = cli._get_ultimate_signing_key()
+        assert result == "AABBCCDD1234FINGERPRINT"
+
+
+def test_get_ultimate_signing_key_not_found():
+    cli = PassCLI()
+    gpg_output = "sec:e:4096:1:AABBCCDD1234::\nfpr:::::::::AABBCCDD1234FINGERPRINT:\n"
+    mock_result = Mock()
+    mock_result.stdout = gpg_output
+    with patch("passtui.security.subprocess.run", return_value=mock_result):
+        result = cli._get_ultimate_signing_key()
+        assert result is None
+
+
+def test_ensure_signing_key_uses_existing():
+    cli = PassCLI()
+    with patch.object(cli, "_get_ultimate_signing_key", return_value="EXISTINGKEY"):
+        result = cli._ensure_signing_key()
+        assert result == "EXISTINGKEY"
+
+
+def test_ensure_signing_key_generates_new():
+    cli = PassCLI()
+    with patch.object(cli, "_get_ultimate_signing_key", return_value=None):
+        with patch.object(cli, "_generate_gpg_key", return_value="NEWKEY") as mock_gen:
+            result = cli._ensure_signing_key()
+            assert result == "NEWKEY"
+            mock_gen.assert_called_once_with("PassTUI", "passtui@local.com")

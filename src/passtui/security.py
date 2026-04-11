@@ -9,6 +9,9 @@ from passpy.git import git_add_path
 from pathlib import Path
 from passtui.models.pass_store import PassModel
 
+PASSTUI_USER = "PassTUI"
+PASSTUI_EMAIL = "passtui@local.com"
+
 
 class PassCLI:
     def __init__(self):
@@ -61,17 +64,11 @@ class PassCLI:
         if self._store.is_init():
             return
 
-        input_data = self._gpg.gen_key_input(
-            name_real=name,
-            name_email=email,
-            key_type="RSA",
-            key_length=4096,
-            expire_date="0",
-        )
-
-        key = self._gpg.gen_key(input_data)
-        self._store.init_store(key.fingerprint, path)
-        return key.fingerprint if key else None
+        fingerprint = self._generate_gpg_key(name, email)
+        if not fingerprint:
+            return None
+        self._store.init_store(fingerprint, path)
+        return fingerprint
 
     def export_gpg_key(self, output_path: str | None = None) -> str | None:
         if not self._store.is_init():
@@ -100,6 +97,38 @@ class PassCLI:
 
         return str(resolved_path)
 
+    def _generate_gpg_key(self, name: str, email: str) -> str | None:
+        input_data = self._gpg.gen_key_input(
+            name_real=name,
+            name_email=email,
+            key_type="RSA",
+            key_length=4096,
+            expire_date="0",
+        )
+        key = self._gpg.gen_key(input_data)
+        return key.fingerprint if key else None
+
+    def _get_ultimate_signing_key(self) -> str | None:
+        result = subprocess.run(
+            [self._store.gpg_bin, "--list-secret-keys", "--with-colons"],
+            capture_output=True,
+            text=True,
+        )
+        in_ultimate_sec = False
+        for line in result.stdout.splitlines():
+            fields = line.split(":")
+            if fields[0] == "sec":
+                in_ultimate_sec = fields[1] == "u"
+            elif fields[0] == "fpr" and in_ultimate_sec:
+                return fields[9]
+        return None
+
+    def _ensure_signing_key(self) -> str | None:
+        fingerprint = self._get_ultimate_signing_key()
+        if fingerprint:
+            return fingerprint
+        return self._generate_gpg_key(PASSTUI_USER, PASSTUI_EMAIL)
+
     def import_gpg_key(self, file_path: str) -> bool:
         if not self._store.is_init():
             return False
@@ -120,22 +149,24 @@ class PassCLI:
 
         gpg_ids = list(dict.fromkeys(gpg_ids))
         current_ids = _get_gpg_recipients(self._store.store_dir)
-        key_names = self.list_keys()
-        if not key_names:
-            return False
 
-        try:
-            key = self.get_store_key(key_names[0])
-            if not key:
-                return False
-        except Exception:
+        signer = self._ensure_signing_key()
+        if not signer:
             return False
 
         try:
             self._gpg.trust_keys(gpg_ids, "TRUST_FULLY")
             for gpg_id in gpg_ids:
                 subprocess.run(
-                    [self._store.gpg_bin, "--batch", "--yes", "--lsign-key", gpg_id],
+                    [
+                        self._store.gpg_bin,
+                        "--batch",
+                        "--yes",
+                        "--local-user",
+                        signer,
+                        "--lsign-key",
+                        gpg_id,
+                    ],
                     check=True,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
