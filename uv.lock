@@ -389,7 +389,7 @@ wheels = [
 
 [[package]]
 name = "passtui"
-version = "0.0.5b1"
+version = "0.0.6b1"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
