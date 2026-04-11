@@ -7,15 +7,10 @@ from textual.widgets import Input, Label, Button
 
 
 class GpgExportData:
-    __slots__ = ("passphrase", "output_path")
+    __slots__ = "output_path"
 
-    def __init__(self, passphrase: bytearray, output_path: str | None) -> None:
-        self.passphrase = passphrase
+    def __init__(self, output_path: str | None) -> None:
         self.output_path = output_path
-
-    def zero(self) -> None:
-        for i in range(len(self.passphrase)):
-            self.passphrase[i] = 0
 
 
 class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
@@ -33,7 +28,7 @@ class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
         grid-gutter: 1 2;
         padding: 1 2;
         width: 84;
-        height: 15;
+        height: 11;
         border: tall $primary;
         border-title-color: $primary;
         border-title-align: center;
@@ -57,14 +52,6 @@ class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
     def compose(self) -> ComposeResult:
         with Grid(id="modal-grid"):
             with Horizontal():
-                yield Label("Enter GPG key passphrase:")
-                yield Input(
-                    placeholder="(e.g., password)",
-                    id="passphrase",
-                    password=True,
-                    compact=True,
-                )
-            with Horizontal():
                 yield Label("Output file path (optional):")
                 yield Input(
                     placeholder="(defaults: ~/passtui/gpg-export.asc)",
@@ -86,17 +73,8 @@ class GpgExportModalScreen(ModalScreen[GpgExportData | None]):
         self.action_cancel()
 
     def action_submit(self) -> None:
-        passphrase_str = self.query_one("#passphrase", Input).value
         output = self.query_one("#output", Input).value
-        if passphrase_str:
-            self.dismiss(
-                GpgExportData(
-                    passphrase=bytearray(passphrase_str.encode("utf-8")),
-                    output_path=output if output else None,
-                )
-            )
-        else:
-            self.notify("Passphrase is required", severity="error")
+        self.dismiss(GpgExportData(output_path=output if output else None))
 
     def action_cancel(self) -> None:
         self.dismiss(None)

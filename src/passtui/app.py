@@ -95,6 +95,7 @@ class PassTUI(App):
         else:
             repo_url = await self.push_screen_wait(
                 InputModalScreen(
+                    title="Sync password store",
                     label="Enter git repository URL",
                     placeholder="(e.g., git@github.com:user/repo.git)",
                 )
@@ -128,8 +129,7 @@ class PassTUI(App):
         if export_data:
             try:
                 output_path = passcli.export_gpg_key(
-                    passphrase=export_data.passphrase,
-                    output_path=export_data.output_path,
+                    output_path=export_data.output_path
                 )
                 if not output_path:
                     self.notify("Failed to export GPG key", severity="error")
@@ -138,13 +138,12 @@ class PassTUI(App):
                 self.notify(f"GPG key exported to {output_path}")
             except Exception as e:
                 self.notify(f"Error: {e}", severity="error")
-            finally:
-                export_data.zero()
 
     @work
     async def action_import_gpg(self) -> None:
         filepath = await self.push_screen_wait(
             InputModalScreen(
+                title="Import GPG key",
                 label="Enter path to GPG key file",
                 placeholder="(e.g., ~/passtui/gpg-export.asc)",
             )

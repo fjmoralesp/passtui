@@ -47,12 +47,14 @@ class InputModalScreen(ModalScreen[str | None]):
         self,
         label: str = "Input",
         placeholder: str = "Enter value",
+        title: str = "Input",
         *args: Any,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self._label = label
         self._placeholder = placeholder
+        self._title = title
 
     def compose(self) -> ComposeResult:
         with Grid(id="modal-grid"):
@@ -63,7 +65,7 @@ class InputModalScreen(ModalScreen[str | None]):
             yield Button("(Esc) Cancel", variant="error", id="cancel")
 
     def on_mount(self) -> None:
-        self.query_one("#modal-grid").border_title = " Input "
+        self.query_one("#modal-grid").border_title = f" {self._title} "
 
     @on(Button.Pressed, "#submit")
     async def handle_button_submit(self) -> None:

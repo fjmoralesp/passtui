@@ -72,9 +72,7 @@ class PassCLI:
         self._store.init_store(key.fingerprint, path)
         return key.fingerprint if key else None
 
-    def export_gpg_key(
-        self, passphrase: bytearray, output_path: str | None = None
-    ) -> str | None:
+    def export_gpg_key(self, output_path: str | None = None) -> str | None:
         if not self._store.is_init():
             return
 
@@ -88,21 +86,17 @@ class PassCLI:
                 raise ValueError(
                     f"Output path must be inside the home directory: {resolved_path}"
                 )
+            if not str(resolved_path).endswith(".asc"):
+                raise ValueError(
+                    f"Output file must have .asc extension: {resolved_path}"
+                )
             resolved_path.parent.mkdir(parents=True, exist_ok=True)
 
         keys = _get_gpg_recipients(self._store.store_dir)
-        try:
-            passphrase_str = passphrase.decode("utf-8")
-            keys_data = self._gpg.export_keys(
-                keys, passphrase=passphrase_str, secret=True
-            )
-        finally:
-            for i in range(len(passphrase)):
-                passphrase[i] = 0
-        if not keys_data:
-            return
-        with open(resolved_path, "w") as f:
-            f.write(keys_data)
+        self._gpg.export_keys(
+            keys, secret=True, expect_passphrase=False, output=resolved_path, armor=True
+        )
+
         return str(resolved_path)
 
     def import_gpg_key(self, file_path: str) -> bool:
