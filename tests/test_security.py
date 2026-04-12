@@ -55,14 +55,13 @@ def test_is_git_initialized():
         assert cli.is_git_initialized() == True
 
 
-@patch("passtui.security.passcli")
-def test_init_git_already_initialized(mock_passcli):
-    mock_passcli.is_git_initialized.return_value = True
-
-    passcli.init_git("test/repo")
-
-    mock_passcli._store.init_git.assert_not_called()
-    mock_passcli._store.git.assert_not_called()
+def test_init_git_already_initialized():
+    with patch.object(passcli, "is_git_initialized", return_value=True):
+        with patch.object(passcli._store, "init_git") as mock_init_git:
+            with patch.object(passcli._store, "git") as mock_git:
+                passcli.init_git("test/repo")
+                mock_init_git.assert_not_called()
+                mock_git.assert_not_called()
 
 
 def test_init_git_not_initialized():
