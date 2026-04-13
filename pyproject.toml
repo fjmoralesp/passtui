@@ -1,6 +1,6 @@
 [project]
 name = "passtui"
-version = "0.1.0"
+version = "0.1.1"
 description = "The TUI for pass"
 authors = [{ name = "Francisco Morales", email = "fjmoralesp@outlook.com" }]
 dependencies = [
