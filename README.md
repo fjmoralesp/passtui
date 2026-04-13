@@ -16,9 +16,7 @@
 
 ## About
 
-`PassTUI` is a terminal UI for [pass](https://www.passwordstore.org/), the standard Unix password manager. It gives you a keyboard-driven, visual way to browse and manage your GPG-encrypted password store without ever leaving the terminal.
-
-If you live in the terminal and want a faster, more intuitive way to work with your passwords, this is for you.
+`PassTUI` is a terminal UI for [pass](https://www.passwordstore.org/), the standard Unix password manager. Browse and manage your GPG-encrypted password store without leaving the terminal.
 
 ### Built With
 
@@ -30,25 +28,31 @@ If you live in the terminal and want a faster, more intuitive way to work with y
 
 ## Features
 
-- Browse your password store in a tree view
-- Search and filter passwords in real time
-- View and edit password entries in a built-in editor
-- Copy the password to clipboard with a single keystroke
-- Copy the username to clipboard with a single keystroke
-- Copy any line to clipboard
-- Create a new GPG key and password store from scratch
+- Tree view for browsing your password store
+- Real-time search and filter
+- Built-in editor to view and edit entries
+- Copy password, username, or any line to clipboard
+- Create a GPG key and password store from scratch
 - Add new password entries
-- Sync the password store with a remote Git repository
-- Export your GPG key to a file
-- Import a GPG key and re-encrypt the store
+- Sync with a remote Git repository
+- Export and import GPG keys
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### Installation
 
-`pass` relies on GPG for encryption, so `gpg` needs to be installed on your system.
+**Linux**
+
+> This script handles detection of your distro's package manager and the full setup. If it doesn't cover your case, see the manual steps below.
+
+```bash
+curl -LsSf https://raw.githubusercontent.com/fjmoralesp/passtui/main/scripts/install-linux.sh | sh
+```
+
+<details>
+  <summary>Manual installation</summary>
 
 **Ubuntu / Debian**
 
@@ -59,7 +63,7 @@ sudo apt install gnupg
 **CentOS / Fedora**
 
 ```bash
-sudo yum install gnupg
+sudo dnf install gnupg2
 ```
 
 **openSUSE**
@@ -80,16 +84,23 @@ emerge --ask app-crypt/gnupg
 sudo pacman -Syu gnupg
 ```
 
+**Configure gpg**
+
+1. Create the keyring folder: `gpg -k`
+2. Add GPG terminal detection to your shell config (~/.zshrc or ~/.bashrc): `export GPG_TTY=$(tty)`
+
+</details>
+
 **macOS**
 
-> macOS doesn't ship with a default GPG setup. There's a script that handles the most common configuration, but if it doesn't work for your setup you'll need to install the prerequisites manually.
+> macOS doesn't ship with GPG. The following script handles the common setup, but if it doesn't work for your case, see the manual steps below.
 
 ```bash
 curl -LsSf https://raw.githubusercontent.com/fjmoralesp/passtui/main/scripts/install.sh | sh
 ```
 
 <details>
-  <summary>Click to see manual installation instructions</summary>
+  <summary>Manual installation</summary>
 
 1. Install gnupg and pinentry-mac: `brew install gnupg pinentry-mac`
 2. Create the keyring folder: `gpg -k`
@@ -100,25 +111,18 @@ curl -LsSf https://raw.githubusercontent.com/fjmoralesp/passtui/main/scripts/ins
 
 </details>
 
-### Installation
+### Installation without GPG
 
-PassTUI is installed via [uv](https://docs.astral.sh/uv/).
+If you prefer to handle GPG yourself and only install PassTUI, make sure you have the following in place first:
 
-Install uv:
+- `gpg2`
+- A `pinentry` program (e.g., `pinentry-curses`, `pinentry-gtk2`, `pinentry-mac`)
+
+Then install via [uv](https://docs.astral.sh/uv/):
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-Install passtui:
-
-```bash
 uv tool install --python 3.14 passtui
-```
-
-Then launch it:
-
-```bash
 passtui
 ```
 
@@ -128,21 +132,21 @@ passtui
 
 ### Create a GPG Store
 
-If you don't have a password store yet, PassTUI can create the GPG key and initialise everything for you in one step.
+No password store yet? PassTUI can generate the GPG key and set everything up in one go.
 
 1. Launch PassTUI: `passtui`
 2. Press `g` to open the **Create GPG Store** dialog
 3. Fill in your **name** and **email**
-4. Press `Enter` to confirm
+4. Press `Enter`
 
-PassTUI will generate a 4096-bit RSA key and initialise the store at `~/.password-store` (or wherever `PASSWORD_STORE_DIR` points).
+A 4096-bit RSA key is generated and the store is initialised at `~/.password-store` (or wherever `PASSWORD_STORE_DIR` points).
 
-> **Tip:** You can set the `PASSWORD_STORE_DIR` environment variable before launching PassTUI to use a different store location.
+> **Tip:** Set `PASSWORD_STORE_DIR` before launching if you want the store somewhere else.
 
 ### Add a New Password
 
 1. Press `n` to open a blank entry in the editor
-2. Fill in your password, username, URL, and any extra notes following the template:
+2. Fill in your details following this format:
 
    ```
    (your password)
@@ -151,62 +155,58 @@ PassTUI will generate a 4096-bit RSA key and initialise the store at `~/.passwor
    ```
 
 3. Press `Ctrl+S` to save
-4. When prompted, enter the path for the new entry (e.g., `email/gmail`)
+4. Enter the path for the entry when prompted (e.g., `email/gmail`)
 
-> **Tip:** The first line is always the password. PassTUI (and `pass`) will only copy the first line when you use the copy-password shortcut.
+> **Tip:** The first line is always treated as the password — that's what `c` copies.
 
 ### View an Existing Password
 
 1. Navigate the tree with `j` / `k` (or arrow keys)
-2. Expand a folder with `Enter`
-3. Select an entry — its decrypted contents will appear in the editor panel on the right
-4. Press `e` to move focus to the editor
-5. From the editor you can:
-   - Press `c` to copy the **password** to the clipboard
-   - Press `b` to copy the **username** to the clipboard
-   - Press `y` to copy the **current line** to the clipboard
-   - Press `i` to enter edit mode and make changes
-   - Press `Ctrl+S` to save any edits
+2. Expand a folder or decrypt an entry with `Enter`
+3. The decrypted contents appear in the editor panel on the right
+4. From there:
+   - `c` — copy **password**
+   - `b` — copy **username**
+   - `y` — copy **current line**
+   - `i` — enter edit mode
+   - `Ctrl+S` — save
 
 ### Sync with a Git Repository
 
-PassTUI can push and pull your password store to/from a remote Git repository.
-
-**First-time setup (new store)**
-
-1. Press `s` to trigger a sync
-2. When prompted, enter the remote repository URL (e.g., `git@github.com:user/passwords.git`)
-3. PassTUI will initialise a Git repo, add the remote, and push
-
-**Subsequent syncs (store already has Git)**
+**First time (new store)**
 
 1. Press `s`
-2. PassTUI will pull with rebase and then push automatically
+2. Enter the remote URL (e.g., `git@github.com:user/passwords.git`)
+3. PassTUI initialises a Git repo, adds the remote, and pushes
 
-> **Note:** This workflow is designed for stores created fresh. If your store was cloned from an existing remote, handle the initial Git setup outside of PassTUI.
+**Already has Git**
+
+1. Press `s`
+2. PassTUI pulls with rebase, then pushes
+
+> **Note:** If your store was cloned from an existing remote, manage the initial Git setup outside PassTUI.
 
 ### Export a GPG Key
 
-Exporting your GPG key lets you back it up or move it to another machine.
-
 1. Press `x` to open the **Export GPG Key** dialog
-2. Enter your GPG key **passphrase**
-3. Optionally enter a custom **output path** (defaults to `~/passtui/gpg-export.asc`)
-4. Press `Enter` to export
+2. Optionally enter an **output path** (defaults to `~/passtui/gpg-export.asc`)
+3. Press `Enter`
 
-The key will be saved as an ASCII-armored `.asc` file.
+The key is saved as an ASCII-armored `.asc` file.
 
-> **Warning:** Keep this file somewhere safe. Anyone with access to it and your passphrase can decrypt your passwords.
+> Note: The GPG key **passphrase** will be requested using pinentry. **Warning:** Keep this file safe — anyone with it and your passphrase can decrypt your passwords.
 
 ### Import a GPG Key
 
-Importing a GPG key lets you move your password store to a new machine or add a new trusted key.
-
 1. Press `z` to open the **Import GPG Key** dialog
-2. Enter the **path** to the `.asc` key file (e.g., `~/passtui/gpg-export.asc`)
-3. Press `Enter` to import
+2. Enter the **path** to the `.asc` file (e.g., `~/passtui/gpg-export.asc`)
+3. Press `Enter`
 
-PassTUI will import the key, mark it as ultimately trusted, update the store's `.gpg-id`, and re-encrypt all entries.
+PassTUI imports the key and then locally signs it as fully trusted using one of your existing private keys. If you don't have one yet, **PassTUI** will create a new key first (you'll be asked for a passphrase using `pinentry` for it) and use that to sign the imported key.
+
+The trust is local-only (a local signature), so it has no effect outside your machine. Once signed, PassTUI updates `.gpg-id` and re-encrypts all entries with the imported key.
+
+> **Note:** The local signature is what tells GPG the key is trusted for encryption on this machine. It doesn't certify the key for anyone else.
 
 ---
 

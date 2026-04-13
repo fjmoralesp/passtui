@@ -2,7 +2,6 @@
 
 echo "Starting GPG2 installation and configuration..."
 
-# 1. Install GPG and Pinentry-Mac via Homebrew
 if ! command -v brew &>/dev/null; then
   echo "Homebrew not found. Please install it first at https://brew.sh/"
   exit 1
@@ -11,18 +10,15 @@ fi
 echo "Installing gnupg and pinentry-mac..."
 brew install gnupg pinentry-mac </dev/null
 
-# 2. Configure GPG Agent for macOS Keychain support
 GPG_DIR="$HOME/.gnupg"
-mkdir -m 700 -p "$GPG_DIR"
+[[ ! -d "$GPG_DIR" ]] && mkdir -m 700 "$GPG_DIR"
 
-# Get the correct Homebrew prefix for Intel or Apple Silicon
 BREW_PREFIX=$(brew --prefix)
 AGENT_CONF="$GPG_DIR/gpg-agent.conf"
 
 echo "Configuring gpg-agent.conf..."
 echo "pinentry-program $BREW_PREFIX/bin/pinentry-mac" >"$AGENT_CONF"
 
-# 3. Add GPG_TTY to shell profile (supports Zsh and Bash)
 SHELL_PROFILE=""
 if [[ "$SHELL" == *"zsh"* ]]; then
   SHELL_PROFILE="$HOME/.zshrc"
@@ -37,7 +33,6 @@ if [ -n "$SHELL_PROFILE" ]; then
   fi
 fi
 
-# 4. Restart the agent to apply changes
 gpgconf --kill gpg-agent
 gpg -k &>/dev/null
 
@@ -46,7 +41,6 @@ if ! command -v gpg2 &>/dev/null; then
   ln -s "$(which gpg)" "$BREW_PREFIX/bin/gpg2"
 fi
 
-# 5. Install uv and passtuy
 echo "Installing passtui"
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
