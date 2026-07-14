@@ -1,40 +1,33 @@
-from passtui.security import passcli
+from typing import Any
+
+from rich.style import Style
+from rich.text import Text
+from textual.reactive import reactive
+from textual.widgets import Tree
+from textual.widgets.tree import TreeNode, TreeDataType
+
+from passtui.config import pass_config, ViewName
 from passtui.models.pass_store import PassModel
+from passtui.security import passcli
 from passtui.utils.clipboard import (
     copy_password_to_clipboard,
     copy_username_to_clipboard,
 )
-from rich.style import Style
-from rich.text import Text
-from textual.binding import Binding
-from textual.reactive import reactive
-from textual.widgets import Tree, _tree
-from textual.widgets.tree import TreeNode, TreeDataType
-from typing import Any
+
+_TOGGLE_STYLE = Style(bold=True)
 
 
 class PassList(Tree):
     items = reactive(list)
     is_filter = reactive(False)
 
-    _current_node: TreeNode
-
     ICON_NODE = "🔐 "
     ICON_NODE_EXPANDED = "🔓 "
     ICON_GPG_NODE = "📝 "
-    """Unicode 'icon' to use for an expanded node."""
 
     BORDER_TITLE = " (T) Passwords "
 
-    BINDINGS = [
-        Binding("j", "cursor_down", "Cursor Down"),
-        Binding("k", "cursor_up", "Cursor Up"),
-        Binding("h", "scroll_left", "Scroll left"),
-        Binding("l", "scroll_right", "Scroll right"),
-        Binding("enter", "select_cursor", "Select"),
-        Binding("c", "copy_password", "Copy password"),
-        Binding("b", "copy_username", "Copy username"),
-    ]
+    BINDINGS = pass_config.get_bindings_for(ViewName.PASSWORDS)
 
     DEFAULT_CSS = """
     PassList {
@@ -52,6 +45,7 @@ class PassList(Tree):
 
     def __init__(self, items: list[str], *args: Any, **kwargs: Any) -> None:
         super().__init__("List", *args, **kwargs)
+        self._current_node: TreeNode | None = None
         self.items = items
         self.show_root = False
 
@@ -75,8 +69,8 @@ class PassList(Tree):
         if not pass_model:
             return
 
-        sucess = copy_password_to_clipboard(pass_model)
-        if not sucess:
+        success = copy_password_to_clipboard(pass_model)
+        if not success:
             self.notify("Failed to copy Password", severity="error")
             return
 
@@ -87,17 +81,17 @@ class PassList(Tree):
         if not pass_model:
             return
 
-        sucess = copy_username_to_clipboard(pass_model)
-        if not sucess:
+        success = copy_username_to_clipboard(pass_model)
+        if not success:
             self.notify("Failed to copy Username", severity="error")
             return
 
         self.notify("Username copied to clipboard")
 
     def _get_highlighted_node_data(self) -> PassModel | None:
-        if not self._current_node.data:
+        if not self._current_node or not self._current_node.data:
             self.notify("Can't get data, no node highlighted", severity="error")
-            return
+            return None
 
         return passcli.get_store_key(self._current_node.data)
 
@@ -142,24 +136,13 @@ class PassList(Tree):
     def render_label(
         self, node: TreeNode[TreeDataType], base_style: Style, style: Style
     ) -> Text:
-        """
-        Custom label rendering for the Tree
-
-        Args:
-            node: A tree node.
-            base_style: The base style of the widget.
-            style: The additional style for the label.
-
-        Returns:
-            A Rich Text object containing the label.
-        """
-        node_label = node._label.copy()
+        node_label = node.label.copy()
         node_label.stylize(style)
 
         if node._allow_expand:
             prefix = (
                 self.ICON_NODE_EXPANDED if node.is_expanded else self.ICON_NODE,
-                base_style + _tree.TOGGLE_STYLE,  # Not the cleanest way to do this
+                base_style + _TOGGLE_STYLE,
             )
         else:
             prefix = (self.ICON_GPG_NODE, base_style)

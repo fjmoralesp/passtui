@@ -1,5 +1,6 @@
 import pytest
 from passtui.app import PassTUI
+from passtui.config import pass_config
 from textual.app import ComposeResult
 from textual.widgets import Static
 
@@ -55,4 +56,4 @@ def test_apptui_action_focus_explorer():
 def test_apptui_on_mount():
     app = MinimalPassTUI()
     app.on_mount()
-    assert app.theme == "rose-pine-moon"
+    assert app.theme == pass_config.theme

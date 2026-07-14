@@ -49,10 +49,10 @@ def test_list_keys():
 def test_is_git_initialized():
     cli = PassCLI()
     with patch.object(cli._store, "repo", None):
-        assert cli.is_git_initialized() == False
+        assert cli.is_git_initialized() is False
 
     with patch.object(cli._store, "repo", Mock()):
-        assert cli.is_git_initialized() == True
+        assert cli.is_git_initialized() is True
 
 
 def test_init_git_already_initialized():
@@ -92,8 +92,11 @@ def test_sync_git_initialized():
 def test_create_gpg_store_already_initialized():
     cli = PassCLI()
     with patch.object(cli._store, "is_init", return_value=True):
-        result = cli.create_gpg_store("Test", "test@example.com")
-        assert result is None
+        try:
+            cli.create_gpg_store("Test", "test@example.com")
+            assert False, "Expected ValueError"
+        except ValueError as error:
+            assert "already initialized" in str(error)
 
 
 def test_create_gpg_store_not_initialized():
@@ -118,14 +121,17 @@ def test_create_gpg_store_not_initialized():
 def test_export_gpg_key_not_initialized():
     cli = PassCLI()
     with patch.object(cli._store, "is_init", return_value=False):
-        result = cli.export_gpg_key()
-        assert result is None
+        try:
+            cli.export_gpg_key()
+            assert False, "Expected ValueError"
+        except ValueError as error:
+            assert "not initialized" in str(error)
 
 
 def test_export_gpg_key_no_output_path():
     cli = PassCLI()
     with patch.object(cli._store, "is_init", return_value=True):
-        with patch("passtui.security._get_gpg_recipients", return_value=["key1"]):
+        with patch.object(cli, "_read_gpg_recipients", return_value=["key1"]):
             with patch.object(cli._gpg, "export_keys") as mock_export:
                 with patch("pathlib.Path.home") as mock_home:
                     mock_home.return_value = Path("/home/test")
@@ -160,7 +166,7 @@ def test_export_gpg_key_invalid_extension():
 def test_export_gpg_key_valid_custom_path():
     cli = PassCLI()
     with patch.object(cli._store, "is_init", return_value=True):
-        with patch("passtui.security._get_gpg_recipients", return_value=["key1"]):
+        with patch.object(cli, "_read_gpg_recipients", return_value=["key1"]):
             with patch.object(cli._gpg, "export_keys") as mock_export:
                 with patch("pathlib.Path.home") as mock_home:
                     mock_home.return_value = Path("/home/test")
@@ -220,9 +226,7 @@ def test_import_gpg_key_no_signer():
                         mock_result = Mock()
                         mock_result.fingerprints = ["AAAA1111"]
                         mock_import.return_value = mock_result
-                        with patch(
-                            "passtui.security._get_gpg_recipients", return_value=[]
-                        ):
+                        with patch.object(cli, "_read_gpg_recipients", return_value=[]):
                             with patch.object(
                                 cli, "_ensure_signing_key", return_value=None
                             ):
@@ -246,9 +250,8 @@ def test_import_gpg_key_success():
                         mock_result.fingerprints = ["AAAA1111"]
                         mock_result.count = 1
                         mock_import.return_value = mock_result
-                        with patch(
-                            "passtui.security._get_gpg_recipients",
-                            return_value=["BBBB2222"],
+                        with patch.object(
+                            cli, "_read_gpg_recipients", return_value=["BBBB2222"]
                         ):
                             with patch.object(
                                 cli, "_ensure_signing_key", return_value="BBBB2222"

@@ -1,8 +1,11 @@
+from typing import Any
+
 from textual import work
 from textual.app import ComposeResult
-from textual.binding import Binding
 from textual.message import Message
 from textual.widgets import TextArea, Static
+
+from passtui.config import pass_config, ViewName
 from passtui.models.pass_store import PassModel
 from passtui.security import passcli
 from passtui.screens.input_modal import InputModalScreen
@@ -22,25 +25,15 @@ class PassData(Static):
 
     text_area: TextArea
 
-    _is_dirty = False
-    _pass_model: PassModel | None = None
-    _pass_path: str | None = None
-
     BORDER_TITLE = TITLE
 
-    # priority=True to override TextArea Bindings
-    BINDINGS = [
-        Binding("escape", "cancel", "Cancel", priority=True),
-        Binding("i", "insert", "Insert"),
-        Binding("c", "copy_password", "Copy password"),
-        Binding("b", "copy_username", "Copy username"),
-        Binding("y", "copy_current_line", "Copy current line"),
-        Binding("j", "cursor_down", "Cursor Down"),
-        Binding("k", "cursor_up", "Cursor Up"),
-        Binding("h", "cursor_left", "Cursor left"),
-        Binding("l", "cursor_right", "Cursor right"),
-        Binding("ctrl+s", "save", "Save"),
-    ]
+    BINDINGS = pass_config.get_bindings_for(ViewName.EDITOR)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._is_dirty = False
+        self._pass_model: PassModel | None = None
+        self._pass_path: str | None = None
 
     DEFAULT_CSS = """
     PassData {
@@ -122,21 +115,20 @@ class PassData(Static):
         self._focus_workaround_for_textual_bindings()
 
     def _focus_workaround_for_textual_bindings(self) -> None:
-        # Textual shows Bindings only when parent widget is focused first
         self.focus()
         self.text_area.focus()
 
     def action_copy_password(self) -> None:
-        sucess = copy_password_to_clipboard(self._pass_model)
-        if not sucess:
+        success = copy_password_to_clipboard(self._pass_model)
+        if not success:
             self.notify("Failed to copy password", severity="error")
             return
 
         self.notify("Password copied to clipboard")
 
     def action_copy_username(self) -> None:
-        sucess = copy_username_to_clipboard(self._pass_model)
-        if not sucess:
+        success = copy_username_to_clipboard(self._pass_model)
+        if not success:
             self.notify("Failed to copy Username", severity="error")
             return
 

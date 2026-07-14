@@ -6,14 +6,14 @@ from textual.widgets import Static
 
 class AppHelper(App):
     def compose(self) -> ComposeResult:
-        yield Search(data=["test1", "test2", "other"], id="search")
+        yield Search(data=["test1", "test2", "other"], input_element_id="search")
 
 
 @pytest.mark.asyncio
 async def test_search_initial_state():
     app = AppHelper()
     async with app.run_test() as pilot:
-        search = app.query_one("#search", Search)
+        search = app.query_one(Search)
         assert search.data == ["test1", "test2", "other"]
         assert search.results == ["test1", "test2", "other"]
 
@@ -22,7 +22,7 @@ async def test_search_initial_state():
 async def test_search_filtering():
     app = AppHelper()
     async with app.run_test() as pilot:
-        search = app.query_one("#search", Search)
+        search = app.query_one(Search)
 
         await pilot.press("t")
         assert search.results == ["test1", "test2", "other"]
@@ -52,7 +52,7 @@ async def test_search_filtering():
 async def test_search_case_insensitive():
     app = AppHelper()
     async with app.run_test() as pilot:
-        search = app.query_one("#search", Search)
+        search = app.query_one(Search)
 
         await pilot.press("T")
         await pilot.press("E")
@@ -65,7 +65,7 @@ async def test_search_case_insensitive():
 async def test_search_actions():
     app = AppHelper()
     async with app.run_test() as pilot:
-        search = app.query_one("#search", Search)
+        search = app.query_one(Search)
 
         search.action_search()
 
