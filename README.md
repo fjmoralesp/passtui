@@ -254,12 +254,52 @@ The trust is local-only (a local signature), so it has no effect outside your ma
 
 ---
 
+## Configuration
+
+PassTUI uses a TOML config file to store your preferences. On first launch, a default config is created at:
+
+| Platform | Path                          |
+| -------- | ----------------------------- |
+| Linux    | `~/.config/passtui/config.toml`  |
+| macOS    | `~/Library/Application Support/passtui/config.toml` |
+| Windows  | `C:\Users\<user>\AppData\Local\passtui\config.toml`  |
+
+> If there's an issue locating the platform directory, PassTUI falls back to `~/.passtui/config.toml`.
+
+### General settings
+
+```toml
+[general]
+theme = "rose-pine-dawn"
+password_store_path = "~/.password-store"
+clip_timeout = 10
+```
+
+- `theme` — Textual theme name (see [Textual themes](https://textual.textualize.io/guide/design/)).
+- `password_store_path` — Where your password store lives. The resolution order is:
+  1. The `PASSWORD_STORE_DIR` environment variable (if set).
+  2. The `password_store_path` value in this config file.
+  3. The default `~/.password-store`.
+- `clip_timeout` — Seconds before the clipboard is cleared after copying a password.
+
+### Custom keybindings
+
+You can remap any keybinding by adding a `[keymap.<View>]` section. The view names are `Home`, `Passwords`, `Editor`, and `Search`.
+
+```toml
+[keymap.Home]
+add_new_password = "p"
+focus_editor = "u"
+```
+
+---
+
 ## Roadmap
 
 - [x] Route all passphrase prompts through `pinentry` for better security
-- [ ] Config file
+- [x] Config file
 - [ ] Vi motions for password editor
-- [ ] Custom keybindings
+- [x] Custom keybindings
 - [ ] Imports
   - [ ] 1Password txt or 1pif data
   - [ ] KeePass KeepassX XML / CSV data
