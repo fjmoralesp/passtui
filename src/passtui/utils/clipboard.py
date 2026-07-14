@@ -3,8 +3,7 @@ import pyperclip
 
 from rich.text import Text
 from passtui.models.pass_store import PassModel
-
-CLIP_TTL = 10
+from passtui.config import pass_config
 
 _active_timer: threading.Timer | None = None
 
@@ -15,7 +14,7 @@ def _copy_with_ttl(value: str) -> bool:
         if _active_timer:
             _active_timer.cancel()
         pyperclip.copy(value)
-        _active_timer = threading.Timer(CLIP_TTL, lambda: pyperclip.copy(""))
+        _active_timer = threading.Timer(pass_config.clip_timeout, lambda: pyperclip.copy(""))
         _active_timer.start()
         return True
     except Exception:

@@ -4,9 +4,10 @@ import subprocess
 
 import passpy
 
-from passpy.gpg import GPG, _get_gpg_recipients, reencrypt_path
+from passpy.gpg import GPG, reencrypt_path
 from passpy.git import git_add_path
 from pathlib import Path
+from passtui.config import pass_config
 from passtui.models.pass_store import PassModel
 
 PASSTUI_USER = "PassTUI"
@@ -14,8 +15,8 @@ PASSTUI_EMAIL = "passtui@local.com"
 
 
 class PassCLI:
-    def __init__(self):
-        self._store = passpy.Store()
+    def __init__(self) -> None:
+        self._store = passpy.Store(store_dir=pass_config.password_store_path)
         self._gpg = GPG(gpgbinary=self._store.gpg_bin, options=self._store.gpg_opts)
 
     def get_store_key(self, key: str) -> PassModel | None:
@@ -34,10 +35,6 @@ class PassCLI:
         return self._store.repo is not None
 
     def init_git(self, repo_url: str) -> None:
-        """
-        This method is intended for new stores only.
-        Stores that were previously created in the repository will cause an error and will not sync.
-        """
         if self.is_git_initialized():
             return
 
@@ -52,17 +49,11 @@ class PassCLI:
         self._store.git("pull", "--rebase", "origin", "HEAD")
         self._store.git("push", "origin", "HEAD")
 
-    def create_gpg_store(self, name: str, email: str, path=None) -> str | None:
-        """
-        This method creates a GPG key and a store in the provided path. If no path is provided,
-        it will use the default store path "~/.password-store" or the "PASSWORD_STORE_DIR"
-        environment variable.
-
-        If the path already has a initialired Store, it will configure the new GPG key created and
-        then reencrypt all the existing entries.
-        """
+    def create_gpg_store(
+        self, name: str, email: str, path: str | None = None
+    ) -> str | None:
         if self._store.is_init():
-            return
+            raise ValueError("GPG store is already initialized")
 
         fingerprint = self._generate_gpg_key(name, email)
         if not fingerprint:
@@ -72,7 +63,7 @@ class PassCLI:
 
     def export_gpg_key(self, output_path: str | None = None) -> str | None:
         if not self._store.is_init():
-            return
+            raise ValueError("GPG store is not initialized")
 
         if output_path is None:
             export_dir = Path.home() / "passtui"
@@ -80,7 +71,7 @@ class PassCLI:
             resolved_path = export_dir / "gpg-export.asc"
         else:
             resolved_path = Path(output_path).expanduser().resolve()
-            if not str(resolved_path).startswith(str(Path.home())):
+            if not resolved_path.is_relative_to(Path.home()):
                 raise ValueError(
                     f"Output path must be inside the home directory: {resolved_path}"
                 )
@@ -90,7 +81,7 @@ class PassCLI:
                 )
             resolved_path.parent.mkdir(parents=True, exist_ok=True)
 
-        keys = _get_gpg_recipients(self._store.store_dir)
+        keys = self._read_gpg_recipients()
         self._gpg.export_keys(
             keys, secret=True, expect_passphrase=False, output=resolved_path, armor=True
         )
@@ -129,12 +120,20 @@ class PassCLI:
             return fingerprint
         return self._generate_gpg_key(PASSTUI_USER, PASSTUI_EMAIL)
 
+    def _read_gpg_recipients(self) -> list[str]:
+        gpg_id_path = Path(self._store.store_dir) / ".gpg-id"
+        try:
+            with open(gpg_id_path) as gpg_id_file:
+                return [line.strip() for line in gpg_id_file if line.strip()]
+        except OSError:
+            return []
+
     def import_gpg_key(self, file_path: str) -> bool:
         if not self._store.is_init():
             return False
 
         resolved_path = Path(file_path).expanduser().resolve()
-        if not str(resolved_path).startswith(str(Path.home())):
+        if not resolved_path.is_relative_to(Path.home()):
             raise ValueError(
                 f"Import path must be inside the home directory: {resolved_path}"
             )
@@ -148,7 +147,7 @@ class PassCLI:
             gpg_ids = [gpg_ids]
 
         gpg_ids = list(dict.fromkeys(gpg_ids))
-        current_ids = _get_gpg_recipients(self._store.store_dir)
+        current_ids = self._read_gpg_recipients()
 
         signer = self._ensure_signing_key()
         if not signer:

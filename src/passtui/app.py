@@ -1,10 +1,11 @@
+import os
 from textual.app import App
 from textual import on, work
 from textual.app import ComposeResult
-from textual.binding import Binding
 from textual.containers import Container
 from textual.widgets import Footer, Input, Tree
 from textual.widgets.tree import TreeNode
+from passtui.config import pass_config, ViewName
 from passtui.security import passcli
 from passtui.widgets.search import Search
 from passtui.widgets.pass_list import PassList
@@ -13,6 +14,7 @@ from passtui.screens.input_modal import InputModalScreen
 from passtui.screens.gpg_keygen_modal import GpgKeygenModalScreen
 from passtui.screens.gpg_export_modal import GpgExportModalScreen
 from passtui.screens.confirm_modal import ConfirmModalScreen
+from textual import log
 
 
 class PassTUI(App):
@@ -20,26 +22,22 @@ class PassTUI(App):
 
     CSS_PATH = "app.tcss"
 
-    BINDINGS = [
-        Binding("/", "search_password", "Search password", show=False),
-        Binding("n", "add_new_password", "Add new password"),
-        Binding("e", "focus_editor", "Focus editor", show=False),
-        Binding("t", "focus_explorer", "Focus explorer", show=False),
-        Binding("s", "sync", "Sync"),
-        Binding("g", "create_gpg_store", "Create new GPG Store", show=False),
-        Binding("x", "export_gpg", "Export GPG key", show=False),
-        Binding("z", "import_gpg", "Import GPG key", show=False),
-    ]
+    BINDINGS = pass_config.get_bindings_for(ViewName.HOME)
 
     def compose(self) -> ComposeResult:
         with Container(id="app-container"):
-            yield Search(data=self.keys, id="search")
+            yield Search(data=self.keys, input_element_id="search")
             yield PassList(items=self.keys)
             yield PassData()
             yield Footer()
 
     def on_mount(self) -> None:
-        self.theme = "rose-pine-moon"
+        self.theme = pass_config.theme
+        if pass_config.initialization_error:
+            self.notify(
+                f"Config error: {pass_config.initialization_error}",
+                severity="error",
+            )
 
     def action_search_password(self) -> None:
         self.query_one(Search).set_focus()
@@ -90,8 +88,8 @@ class PassTUI(App):
             try:
                 passcli.sync_git()
                 self.notify("Git sync completed")
-            except Exception as e:
-                self.notify(f"Failed to sync git: {e}", severity="error")
+            except Exception as error:
+                self.notify(f"Failed to sync git: {error}", severity="error")
         else:
             repo_url = await self.push_screen_wait(
                 InputModalScreen(
@@ -104,8 +102,8 @@ class PassTUI(App):
                 try:
                     passcli.init_git(repo_url)
                     self.notify("Git initialized and pushed")
-                except Exception as e:
-                    self.notify(f"Failed to init git: {e}", severity="error")
+                except Exception as error:
+                    self.notify(f"Failed to init git: {error}", severity="error")
 
     @work
     async def action_create_gpg_store(self) -> None:
@@ -120,8 +118,10 @@ class PassTUI(App):
                     return
 
                 self.notify(f"GPG Store created: {fingerprint}")
-            except Exception as e:
-                self.notify(f"Error: {e}", severity="error")
+            except ValueError as error:
+                self.notify(str(error), severity="warning")
+            except Exception as error:
+                self.notify(f"Error: {error}", severity="error")
 
     @work
     async def action_export_gpg(self) -> None:
@@ -136,8 +136,10 @@ class PassTUI(App):
                     return
 
                 self.notify(f"GPG key exported to {output_path}")
-            except Exception as e:
-                self.notify(f"Error: {e}", severity="error")
+            except ValueError as error:
+                self.notify(str(error), severity="warning")
+            except Exception as error:
+                self.notify(f"Error: {error}", severity="error")
 
     @work
     async def action_import_gpg(self) -> None:
@@ -167,5 +169,5 @@ class PassTUI(App):
                 return
 
             self.notify("GPG key imported successfully")
-        except Exception as e:
-            self.notify(f"Error: {e}", severity="error")
+        except Exception as error:
+            self.notify(f"Error: {error}", severity="error")

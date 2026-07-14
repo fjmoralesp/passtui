@@ -1,34 +1,14 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 
 
 @dataclass(init=False)
 class PassModel:
-    """
-    This model follows the passwordstore.org data organization.
-
-    The copy features in `pass` and `passpy` copy only the first line of an
-    entry. Following the recommended pattern:
-
-        "This is the preferred organizational scheme used by the author. The
-        --clip / -c options will only copy the first line of such a file to the
-        clipboard, thereby making it easy to fetch the password for login forms,
-        while retaining additional information in the same file."
-
-    Reference: https://www.passwordstore.org/
-    """
-
     password: str
-    username: str
-    url: str
+    username: str = field(metadata={"in_template": True})
+    url: str = field(metadata={"in_template": True})
     meta: list[str]
 
     _raw_data: str
-    _template_ignored: tuple[str, ...] = (
-        "_template_ignored",
-        "password",
-        "_raw_data",
-        "meta",
-    )
 
     def __init__(self, data: str | None) -> None:
         if data is None:
@@ -59,10 +39,10 @@ class PassModel:
         return self._raw_data
 
     @classmethod
-    def get_new_entry_template(cls) -> tuple[PassModel, str]:
+    def get_new_entry_template(cls) -> tuple["PassModel", str]:
         lines = ["(add your password here)"]
-        for field in fields(cls):
-            if field.name not in cls._template_ignored:
-                lines.append(f"{field.name.capitalize()}: ")
+        for declared_field in fields(cls):
+            if declared_field.metadata.get("in_template"):
+                lines.append(f"{declared_field.name.capitalize()}: ")
         template = "\n".join(lines)
         return cls(template), template
