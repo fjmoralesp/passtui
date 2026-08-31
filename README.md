@@ -1,3 +1,5 @@
+
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -151,7 +153,7 @@ A 4096-bit RSA key is generated and the store is initialised at `~/.password-sto
    ```
    (your password)
    Username: your-username
-   Url: https://example.com
+   URL: https://example.com
    ```
 
 3. Press `Ctrl+S` to save
